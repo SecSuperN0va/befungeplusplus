@@ -1,0 +1,10 @@
+[META]
+dimensions.rows = 2
+dimensions.columns = 16
+context.entrypoint.row = 0
+context.entrypoint.column = 0
+context.threadCount = 1
+context.threadHeadStart = 2
+
+&>:1-:v v *_$.@
+ ^    _$>\:^
