@@ -18,13 +18,15 @@
 #define DEFAULT_STACK_SIZE 2048
 #define DEFAULT_OUTPUT_SIZE 4096
 
+#define STACK_ITEM_TYPE signed long int
+
 
 typedef struct BefungeControl {
 	PBEFUNGE_METADATA meta;
 	int tickDelay;
 	int direction;
 	int position[N_DIMENSIONS];
-	char* stack;
+	signed long int* stack;
 	char* output;
 	int stackPointer;
 	int outputSize;
@@ -47,9 +49,9 @@ void PrintProgramState(PBEFUNGE_CONTROL control);
 
 void PrintStackState(PBEFUNGE_CONTROL control);
 
-void Push(PBEFUNGE_CONTROL control, char value);
+void Push(PBEFUNGE_CONTROL control, STACK_ITEM_TYPE value);
 
-void Pop(PBEFUNGE_CONTROL control, char* out);
+void Pop(PBEFUNGE_CONTROL control, STACK_ITEM_TYPE* out);
 
 char GetCommand(PBEFUNGE_CONTROL control);
 

@@ -42,7 +42,8 @@ void printHelp(char* progName) {
 int tick(PBEFUNGE_CONTROL control) {
 	char command = '\0';
 
-	char a, b = '\0';
+	//char a, b = '\0';
+	unsigned long int a, b = 0;
 	int v = 0;
 
 	char tempBuffer[32] = { 0 };
@@ -50,7 +51,7 @@ int tick(PBEFUNGE_CONTROL control) {
 	bool stringMode = false;
 
 	while (command != '@') {
-		a, b = '\0';
+		a = b = 0;
 		memset(tempBuffer, 0, sizeof(tempBuffer));
 		if (control->showState) {
 			clrscr();

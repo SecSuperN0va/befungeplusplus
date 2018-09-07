@@ -13,7 +13,7 @@ void InitialiseControlSystem(PBEFUNGE_CONTROL control, char* programString, int 
 	control->position[AXIS_X] = metadata->context.entrypoint.column;
 	control->position[AXIS_Y] = metadata->context.entrypoint.row;
 
-	control->stack = (char*)calloc(DEFAULT_STACK_SIZE, sizeof(char));
+	control->stack = (STACK_ITEM_TYPE*)calloc(DEFAULT_STACK_SIZE, sizeof(STACK_ITEM_TYPE));
 	control->stackPointer = 0;
 
 	control->outputFile = outputFile;
@@ -191,7 +191,7 @@ void PrintStackState(PBEFUNGE_CONTROL control) {
 	int total_required = 0;
 	char* buffer = NULL;
 	const char title[] = "Stack State:\n============\n";
-	char tmpBuf[20] = { 0 };
+	char tmpBuf[32] = { 0 };
 
 	if (stackWindowMaxSize >= control->stackPointer) {
 		c = control->stackPointer;
@@ -213,14 +213,14 @@ void PrintStackState(PBEFUNGE_CONTROL control) {
 	strncat(buffer, tmpBuf, strlen(tmpBuf));
 	memset(tmpBuf, 0, strlen(tmpBuf));
 
-	strncat(buffer, "|------|\n", strlen(title));
+	strncat(buffer, "|------------|\n", strlen(title));
 
 	for (; c != 0; c--) {
-		snprintf(tmpBuf, sizeof(tmpBuf), "|  %02x  |\n", control->stack[c]);
+		snprintf(tmpBuf, sizeof(tmpBuf), "|  %08x  |\n", control->stack[c]);
 		strncat(buffer, tmpBuf, strlen(tmpBuf));
 		memset(tmpBuf, 0, strlen(tmpBuf));
 	}
-	strncat(buffer, "|------|\n", strlen(title));
+	strncat(buffer, "|------------|\n", strlen(title));
 
 
 	fprintf(stderr, buffer);
@@ -233,31 +233,17 @@ bool IsPrintable(char value) {
 	return false;
 }
 
-void FormatPrintableValue(char value, char* buf, size_t bufSize) {
-	if (IsPrintable(value)) {
-		snprintf(buf, bufSize, "'%c'", value);
-	}
-	else {
-		snprintf(buf, bufSize, "0x%02x", value);
-	}
-	return;
-}
-
-void Push(PBEFUNGE_CONTROL control, char value) {
+void Push(PBEFUNGE_CONTROL control, STACK_ITEM_TYPE value) {
 	char buf[10] = { 0 };
-	FormatPrintableValue(value, buf, sizeof(buf));
-	if (control->showState) fprintf(stderr, "Push(%s)\n", buf);
 	control->stack[control->stackPointer++] = value;
 	return;
 }
 
-void Pop(PBEFUNGE_CONTROL control, char* out) {
+void Pop(PBEFUNGE_CONTROL control, STACK_ITEM_TYPE* out) {
 	char buf[10] = { 0 };
 
 	if (control->stackPointer > 0){
-		char value = control->stack[--control->stackPointer];
-		FormatPrintableValue(value, buf, sizeof(buf));
-		if (control->showState) fprintf(stderr, "Pop(%s)\n", buf);
+		STACK_ITEM_TYPE value = control->stack[--control->stackPointer];
 		if (out != NULL) {
 			*out = value;
 		}
@@ -306,7 +292,6 @@ void TakeStep(PBEFUNGE_CONTROL control) {
 }
 
 void SetDirection(PBEFUNGE_CONTROL control, int direction) {
-	if (control->showState) fprintf(stderr, "Setting direction: %d", direction);
 	control->direction = direction;
 }
 
@@ -325,7 +310,8 @@ void FlipDirection(PBEFUNGE_CONTROL control) {
 }
 
 void Put(PBEFUNGE_CONTROL control) {
-	char row, column, value;
+	//char row, column, value;
+	STACK_ITEM_TYPE row, column, value;
 
 	// retrieve two values from the stack
 	Pop(control, &row);
@@ -348,7 +334,7 @@ void Put(PBEFUNGE_CONTROL control) {
 }
 
 void Get(PBEFUNGE_CONTROL control) {
-	char row, column;
+	STACK_ITEM_TYPE row, column;
 
 	// retrieve two values from the stack
 	Pop(control, &row);
