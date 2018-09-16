@@ -117,18 +117,29 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="arguments.c" />
+    <ClCompile Include="befunge_error.c" />
+    <ClCompile Include="Commands.c" />
     <ClCompile Include="configparser.c" />
     <ClCompile Include="grid.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="control.c" />
     <ClCompile Include="meta.c" />
+    <ClCompile Include="SyscallWindows.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arguments.h" />
+    <ClInclude Include="befunge_error.h" />
+    <ClInclude Include="Commands.h" />
     <ClInclude Include="configparser.h" />
     <ClInclude Include="control.h" />
     <ClInclude Include="grid.h" />
+    <ClInclude Include="inline.h" />
     <ClInclude Include="meta.h" />
+    <ClInclude Include="Syscalls.h" />
+    <ClInclude Include="SyscallWindows.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="OS_Interaction.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

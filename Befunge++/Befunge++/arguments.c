@@ -34,6 +34,10 @@ bool ProcessArguments(PARGUMENTS args, int argc, char** argv) {
 			args->args[ARG_TOGGLE_OUTPUT] = (char*)1;
 			counter--;
 			break;
+		case 's':
+			args->args[ARG_SINGLE_STEP] = (char*)1;
+			counter--;
+			break;
 		default:
 			fprintf(stderr, "No valid argument expected for '%s'\n", argv[counter]);
 			return false;

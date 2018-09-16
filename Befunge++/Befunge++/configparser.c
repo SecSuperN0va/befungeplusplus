@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "befunge_error.h"
 
 
 config_option_t ReadConfigSectionOfFile(FILE *fp) {
@@ -63,7 +64,7 @@ config_option_t ReadConfigSectionOfFile(FILE *fp) {
 		}
 	}
 	else {
-		fprintf(stderr, "File has no config!\n");
+		 DEBUG_MESSAGE("File has no config!\n");
 	}
 	return last_co_addr;
 }

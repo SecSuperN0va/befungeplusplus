@@ -2,6 +2,7 @@
 #include "configparser.h"
 #include <string.h>
 #include <stdlib.h>
+#include "befunge_error.h"
 
 void InitialiseProgramMetadataDefaults(PBEFUNGE_METADATA *metadata) {
 	PBEFUNGE_METADATA meta = (PBEFUNGE_METADATA)calloc(1, sizeof(BEFUNGE_METADATA));
@@ -57,7 +58,7 @@ PBEFUNGE_METADATA LoadProgramMetadata(FILE *fp) {
 		}
 	}
 	else {
-		fprintf(stderr, "No file handle provided. Default metadata applies.\n");
+		ERROR_MESSAGE("No file handle provided. Default metadata applies.\n");
 	}
 	return meta;
 }

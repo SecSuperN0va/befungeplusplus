@@ -5,9 +5,10 @@
 #define ARG_TICK_DELAY 1
 #define ARG_OUTPUT_FILE 2
 #define ARG_TOGGLE_OUTPUT 3
+#define ARG_SINGLE_STEP 4
 
 // The following needs to be the same as the number of arguments defined above this line
-#define N_AVAILABLE_ARGS 4
+#define N_AVAILABLE_ARGS 5
 
 typedef struct Arguments {
 	char** args;
