@@ -32,3 +32,4 @@ When file access is complete, or no longer required, OSI\_FILE\_CLOSE can be use
 The `mode` argument is used to identify which handle within the BEFUNGE_CONTROL structure to close and revert to its original state. 
 If `mode` is 0, then the handle designated for input will be closed and replaced with stdin.
 If `mode` is 1, then the handle designated for output will be closed and replaced with stdout.
+

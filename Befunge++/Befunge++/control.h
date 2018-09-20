@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "grid.h"
 #include "meta.h"
+#include "functions.h"
 #include <stdbool.h>
 
 
@@ -82,8 +83,10 @@ void InitialiseFungeInstance(PFUNGE_INSTANCE instance, void* parent, char* progr
 
 typedef struct BefungeControl {
 	PBEFUNGE_METADATA meta;
+	PFUNCTION_LIST functions;
 	PINSTANCE_LIST firstInstance;
 	int nInstances;
+	char* originalProgramString;
 } BEFUNGE_CONTROL, *PBEFUNGE_CONTROL;
 
 /*
@@ -100,7 +103,7 @@ void InitialiseDynamicControlSettings(PDYNAMIC_CONTROL_SETTINGS *settings);
 void InitialiseInstructionPointerState(PINSTRUCTION_POINTER_STATE *ipState, POSITION entrypoint);
 void InitialiseRegisters(REGISTERS registers);
 void InitialiseFungeStack(PFUNGE_STACK_STATE *stackStruct);
-void InitialiseControlSystem(PBEFUNGE_CONTROL control, char* programString, int tickDelay, FILE* outputFile, bool showState, PBEFUNGE_METADATA metadata, bool singleStep);
+void InitialiseControlSystem(PBEFUNGE_CONTROL control, char* programString, PFUNCTION_LIST functions, int tickDelay, FILE* outputFile, bool showState, PBEFUNGE_METADATA metadata, bool singleStep);
 void InitialiseInstanceList(PINSTANCE_LIST *list);
 void CreateInstance(PINSTANCE_LIST list);
 

@@ -7,7 +7,7 @@ context.threadCount = 1
 context.threadHeadStart = 2
 
 v     [set data_len]  [set y_coord] [set x_coord]
->  F  62*1-0r            61r           22r               v
+>     62*1-0r            61r           22r               v
 v      o10"C:\tmp\testfile.txt"0                         <
 <v     o11"C:\tmp\testoutput.txt"0                      
  >              >0R:~\2R+1Rpv                            v

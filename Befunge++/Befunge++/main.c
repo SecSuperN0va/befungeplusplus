@@ -7,6 +7,7 @@
 #include "control.h"
 #include "arguments.h"
 #include "meta.h"
+#include "functions.h"
 #include "befunge_error.h"
 #include "Commands.h"
 
@@ -53,6 +54,10 @@ int StartController(PBEFUNGE_CONTROL control) {
 	while (HasActiveInstances(control)) {
 		listEntry = control->firstInstance;
 		while (listEntry != NULL) {
+			if (listEntry->pInstance == NULL) {
+				listEntry = listEntry->next;
+				continue;
+			}
 			instance = listEntry->pInstance;
 			if (instance->staticSettings->showState) {
 				clrscr();
@@ -106,11 +111,11 @@ int StartController(PBEFUNGE_CONTROL control) {
 }
 
 
-void runProgram(char* programString, int tickDelay, FILE* outputFile, bool showState, PBEFUNGE_METADATA metadata, bool singleStep) {
+void runProgram(char* programString, PFUNCTION_LIST functions, int tickDelay, FILE* outputFile, bool showState, PBEFUNGE_METADATA metadata, bool singleStep) {
 	BEFUNGE_CONTROL controlSystem;
 
 	RunPopulation();
-	InitialiseControlSystem(&controlSystem, programString, tickDelay, outputFile, showState, metadata, singleStep);
+	InitialiseControlSystem(&controlSystem, programString, functions, tickDelay, outputFile, showState, metadata, singleStep);
 
 	StartController(&controlSystem);
 
@@ -127,6 +132,7 @@ int main(int argc, char* argv[]) {
 	int err = 0;
 
 	PBEFUNGE_METADATA metadata;
+	PFUNCTION_LIST functions;
 
 	char* programString = { 0 };
 
@@ -151,6 +157,7 @@ int main(int argc, char* argv[]) {
 				if ((fp = fopen(args.args[ARG_PROGRAM_FILE], "r")) != NULL) {
 					// Read any config from the top of the file
 					metadata = LoadProgramMetadata(fp);
+					functions = LoadAllFunctionDefinitions(fp);
 					
 					// Identify the remaining file size so we can allocate a buffer of the correct size
 					size_t origPos = ftell(fp);
@@ -159,7 +166,7 @@ int main(int argc, char* argv[]) {
 					fseek(fp, origPos, SEEK_SET);
 
 					// Allocate the necessary buffer
-					programString = (char*)calloc(1, programFileSize * sizeof(char));
+					programString = (char*)calloc(1, programFileSize * sizeof(char) + 1);
 					fread(programString, 1, programFileSize, fp);
 
 					fclose(fp);
@@ -173,9 +180,10 @@ int main(int argc, char* argv[]) {
 			else {
 				// Load default metadata
 				metadata = LoadProgramMetadata(fp);
+				functions = LoadAllFunctionDefinitions(fp);
 
 				//Specify a default program string
-				programString = "<              vv  ,,,,,\"Hello\"<>48*,          vv,,,,,,\"World!\"<>25*,@";
+				programString = "<              vv  ,,,,,\"Hello\"<>48*,          vv,,,,,,\"World!\"<>25*,@\0";
 			}
 
 			if (args.args[ARG_OUTPUT_FILE] != NULL) {
@@ -190,7 +198,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			// Start the interpretter with the necessary args
-			runProgram(programString, tickDelay, ofp, (bool) args.args[ARG_TOGGLE_OUTPUT], metadata, args.args[ARG_SINGLE_STEP]);
+			runProgram(programString, functions, tickDelay, ofp, (bool) args.args[ARG_TOGGLE_OUTPUT], metadata, args.args[ARG_SINGLE_STEP]);
 			if (ofp != NULL)
 				fclose(ofp);
 		}

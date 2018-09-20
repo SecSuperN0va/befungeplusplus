@@ -5,6 +5,7 @@
 #include "srcutil.h"
 #include "befunge_error.h"
 #include "Commands.h"
+#include "functions.h"
 
 /*
 	POPULATION METHODS
@@ -77,22 +78,32 @@ void InitialiseFungeInstance(PFUNGE_INSTANCE instance, void* parent, char* progr
 	instance->output = (char*)calloc(DEFAULT_OUTPUT_SIZE, sizeof(char));
 	instance->outputSize = 0;
 
-	LoadProgramString(instance, programString);
+	if (programString == NULL) {
+		DEBUG_MESSAGE("Loaded program string from control system");
+		LoadProgramString(instance, ((PBEFUNGE_CONTROL)instance->parent)->originalProgramString);
+	}
+	else {
+		DEBUG_MESSAGE("Loaded program string from supplied string");
+		LoadProgramString(instance, programString);
+	}
 	return;
 }
 
-void InitialiseControlSystem(PBEFUNGE_CONTROL control, char* programString, int tickDelay, FILE* outputFile, bool showState, PBEFUNGE_METADATA metadata, bool singleStep) {
+void InitialiseControlSystem(PBEFUNGE_CONTROL control, char* programString, PFUNCTION_LIST functions, int tickDelay, FILE* outputFile, bool showState, PBEFUNGE_METADATA metadata, bool singleStep) {
 	POSITION entrypoint;
 
 	entrypoint[AXIS_X] = metadata->context.entrypoint.column;
 	entrypoint[AXIS_Y] = metadata->context.entrypoint.row;
 
 	control->meta = metadata;
+	control->functions = functions;
+
+	control->originalProgramString = programString;
+
 	InitialiseInstanceList(&(control->firstInstance));
 	CreateInstance(control->firstInstance);
-	control->firstInstance = control->firstInstance->next;
 	control->firstInstance->previous = NULL;
-	InitialiseFungeInstance(control->firstInstance->pInstance, (void*) control, programString, tickDelay, outputFile, showState, singleStep, entrypoint, control->meta->dimensions);
+	InitialiseFungeInstance(((PINSTANCE_LIST)((PINSTANCE_LIST)control->firstInstance)->next)->pInstance, (void*) control, control->originalProgramString, tickDelay, outputFile, showState, singleStep, entrypoint, control->meta->dimensions);
 	
 	return;
 }
@@ -132,7 +143,7 @@ void OutputString(PFUNGE_INSTANCE instance, char* str, int len) {
 		);
 		instance->outputSize += len;
 		fwrite(str, 1, len, instance->dynamicSettings->hProgramOut);
-		if (instance->outputFile != NULL) {
+		if (instance->outputFile != NULL || instance->outputFile == stdout || instance->outputFile == stderr) {
 			fwrite(str, 1, len, instance->outputFile);
 		}
 	}
@@ -452,15 +463,15 @@ void LoadProgramString(PFUNGE_INSTANCE instance, char* programString) {
 		}
 	}
 
-
 	while (ptr < strlen(programString)) {
 		if ((ptr < strlen(programString) - 1
 			&& (programString[ptr] == '\r' && programString[ptr + 1] == '\n'))
 			|| (programString[ptr] == '\r' || programString[ptr] == '\n')
 			|| columnCount == instance->gridStruct->columns) {
-			while (programString[ptr] == '\r' || programString[ptr] == '\n') {
+			/*while (programString[ptr] == '\r' || programString[ptr] == '\n') {
 				ptr++;
-			} 
+			}*/ 
+			ptr++;
 			rowCount++;
 			columnCount = 0;
 			continue;
@@ -603,13 +614,14 @@ bool AcceptCommand(PFUNGE_INSTANCE instance, char commandChar) {
 }
 
 bool HasActiveInstances(PBEFUNGE_CONTROL control) {
-	if (control->firstInstance->pInstance != NULL) {
+	if (control->firstInstance->pInstance != NULL || control->firstInstance->next != NULL) {
 		return true;
 	}
 	return false;
 }
 
 void RegisterInstanceTermination(PFUNGE_INSTANCE pInstance) {
+
 	PINSTANCE_LIST current = ((PBEFUNGE_CONTROL)pInstance->parent)->firstInstance;
 	bool success = false;
 	do {
@@ -620,8 +632,18 @@ void RegisterInstanceTermination(PFUNGE_INSTANCE pInstance) {
 			if (current->previous != NULL) {
 				((PINSTANCE_LIST)current->previous)->next = current->next;
 			}
+			else {
+				if (current->next != NULL) {
+					((PINSTANCE_LIST)current->next)->previous = NULL;
+				}
+			}
 			if (current->next != NULL) {
 				((PINSTANCE_LIST)current->next)->previous = current->previous;
+			}
+			else {
+				if (current->previous != NULL) {
+					((PINSTANCE_LIST)current->previous)->next = NULL;
+				}
 			}
 			success = true;
 			break;

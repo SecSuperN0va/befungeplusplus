@@ -120,6 +120,7 @@
     <ClCompile Include="befunge_error.c" />
     <ClCompile Include="Commands.c" />
     <ClCompile Include="configparser.c" />
+    <ClCompile Include="functions.c" />
     <ClCompile Include="grid.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="control.c" />
@@ -132,6 +133,7 @@
     <ClInclude Include="Commands.h" />
     <ClInclude Include="configparser.h" />
     <ClInclude Include="control.h" />
+    <ClInclude Include="functions.h" />
     <ClInclude Include="grid.h" />
     <ClInclude Include="inline.h" />
     <ClInclude Include="meta.h" />
@@ -139,6 +141,7 @@
     <ClInclude Include="SyscallWindows.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Forking.md" />
     <None Include="OS_Interaction.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

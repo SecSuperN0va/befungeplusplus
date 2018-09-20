@@ -1,0 +1,10 @@
+[META]
+dimensions.rows = 1
+dimensions.columns = 8
+context.entrypoint.row = 0
+context.entrypoint.column = 0
+context.threadCount = 1
+context.threadHeadStart = 2
+
+>&11F>@
+

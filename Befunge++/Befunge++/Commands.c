@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "Syscalls.h"
 #include "befunge_error.h"
+#include "functions.h"
 
 
 int commandCharLookup[MAX_ORD] = { CMD_NOP };
@@ -346,91 +347,168 @@ bool CmdSyscall(PFUNGE_INSTANCE instance) {
 }
 
 bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance) {
-	STACK_ITEM_TYPE OsiId;
-	STACK_ITEM_TYPE a;
-	char c = '\0';
-	char filePathBuffer[2048] = { 0 };
-	int file_path_length = 0;
-	int fileMode = 0;
+STACK_ITEM_TYPE OsiId;
+STACK_ITEM_TYPE a;
+char c = '\0';
+char filePathBuffer[2048] = { 0 };
+int file_path_length = 0;
+int fileMode = 0;
 
 
-	Pop(instance, &OsiId);
+Pop(instance, &OsiId);
 
-	switch (OsiId) {
-	case OSI_FILE_OPEN:
-		// Pop the file mode from the stack
+switch (OsiId) {
+case OSI_FILE_OPEN:
+	// Pop the file mode from the stack
+	Pop(instance, &a);
+	fileMode = (int)a;
+
+	// Pop the file path from the stack
+	do {
 		Pop(instance, &a);
-		fileMode = (int)a;
+		c = (char)a;
+		strncat(filePathBuffer, &c, 1);
+		file_path_length++;
+	} while (c != '\0');
 
-		// Pop the file path from the stack
-		do {
-			Pop(instance, &a);
-			c = (char)a;
-			strncat(filePathBuffer, &c, 1);
-			file_path_length++;
-		} while (c != '\0');
-
-		FILE* p = NULL;
-		switch (fileMode) {
-		case FLAG_FILE_MODE_READ:
-			p = fopen(filePathBuffer, "r");
-			if (p != NULL) {
-				SetProgramInput(instance, p);
-			}
-			else {
-				ERROR_MESSAGE("Could not open file for reading");
-				goto ERROR_CASE;
-			}
-			break;
-		case FLAG_FILE_MODE_WRITE:
-			p = fopen(filePathBuffer, "w");
-			if (p != NULL) {
-				SetProgramOutput(instance, p);
-			}
-			else {
-				ERROR_MESSAGE("Could not open file for writing");
-				goto ERROR_CASE;
-			}
-			break;
+	FILE* p = NULL;
+	switch (fileMode) {
+	case FLAG_FILE_MODE_READ:
+		p = fopen(filePathBuffer, "r");
+		if (p != NULL) {
+			SetProgramInput(instance, p);
 		}
-		break;
-	case OSI_FILE_CLOSE:
-		// Pop the mode to operate on.
-		Pop(instance, &a);
-		fileMode = (int)a;
-		switch (fileMode) {
-		case FLAG_FILE_MODE_READ:
-			ResetProgramInput(instance);
-			break;
-		case FLAG_FILE_MODE_WRITE:
-			ResetProgramOutput(instance);
-			break;
-		default:
-			ERROR_MESSAGE("Invalid mode value for OSI_FILE_CLOSE");
+		else {
+			ERROR_MESSAGE("Could not open file for reading");
 			goto ERROR_CASE;
 		}
 		break;
-	default:
-	ERROR_CASE:
-		OutputString(instance, "Can not process OSI ID", 22);
-		return false;
+	case FLAG_FILE_MODE_WRITE:
+		p = fopen(filePathBuffer, "w");
+		if (p != NULL) {
+			SetProgramOutput(instance, p);
+		}
+		else {
+			ERROR_MESSAGE("Could not open file for writing");
+			goto ERROR_CASE;
+		}
+		break;
 	}
+	break;
+case OSI_FILE_CLOSE:
+	// Pop the mode to operate on.
+	Pop(instance, &a);
+	fileMode = (int)a;
+	switch (fileMode) {
+	case FLAG_FILE_MODE_READ:
+		ResetProgramInput(instance);
+		break;
+	case FLAG_FILE_MODE_WRITE:
+		ResetProgramOutput(instance);
+		break;
+	default:
+		ERROR_MESSAGE("Invalid mode value for OSI_FILE_CLOSE");
+		goto ERROR_CASE;
+	}
+	break;
+default:
+ERROR_CASE:
+	OutputString(instance, "Can not process OSI ID", 22);
+	return false;
+}
 }
 
 bool CmdFork(PFUNGE_INSTANCE instance) {
+	PFUNCTION_LIST functionEntry = NULL;
+	PFUNCTION_DEFINITION functionDefinition = NULL;
+	bool status = false;
+
 	CreateInstance(((PBEFUNGE_CONTROL)instance->parent)->firstInstance);
 	PINSTANCE_LIST entry = ((PBEFUNGE_CONTROL)instance->parent)->firstInstance;
 	while (entry->next != NULL) {
 		entry = entry->next;
 	}
-	POSITION entrypoint;
-	entrypoint[AXIS_X] = 0;
-	entrypoint[AXIS_Y] = 0;
 
-	GRID_DIMENSIONS dims;
-	dims.columns = 18;
-	dims.rows = 1;
-	InitialiseFungeInstance(entry->pInstance, (void*)instance->parent, ">\"TESTING\",,,,,,,@", 0, NULL, true, true, entrypoint, dims);
+	// Pop the function identifier
+	STACK_ITEM_TYPE functionId = 0;
+	Pop(instance, &functionId);
+	fprintf(stderr, "Starting function %d\n", functionId);
 
-	return;
+	// Identify the matching function by functionId
+	functionEntry = ((PBEFUNGE_CONTROL)instance->parent)->functions;
+	functionEntry = functionEntry->next;
+	while (functionEntry != NULL) {
+		if (((PFUNCTION_DEFINITION)functionEntry->pFunction)->id == functionId) {
+			fprintf(stderr, "Found function definition for id: %d\n", functionId);
+			functionDefinition = functionEntry->pFunction;
+			break;
+		}
+		functionEntry = functionEntry->next;
+	}
+
+	if (functionDefinition != NULL) {
+		if ((functionDefinition->entrypoint.row < instance->gridStruct->rows)
+			&& (functionDefinition->entrypoint.column < instance->gridStruct->columns)){
+
+			// Pop the FAF/WFR indicator
+			STACK_ITEM_TYPE fafwfrIndicator = 0;
+			Pop(instance, &fafwfrIndicator);
+
+			if (fafwfrIndicator) {
+				fprintf(stderr, "Starting function with WFR mechanism\n");
+			}
+			else {
+				fprintf(stderr, "Starting function with FAF mechanism\n");
+			}
+
+			POSITION entrypoint;
+			entrypoint[AXIS_X] = functionDefinition->entrypoint.column;
+			entrypoint[AXIS_Y] = functionDefinition->entrypoint.row;
+
+			GRID_DIMENSIONS dims;
+			dims.columns = ((PBEFUNGE_CONTROL)instance->parent)->meta->dimensions.columns;
+			dims.rows = ((PBEFUNGE_CONTROL)instance->parent)->meta->dimensions.rows;
+			InitialiseFungeInstance(entry->pInstance, (void*)instance->parent, NULL, 0, NULL, instance->staticSettings->showState, instance->staticSettings->singleStepMode, entrypoint, dims);
+
+			// Pop the necessary values from caller stack and push onto callee stack.
+
+			STACK_ITEM_TYPE val = 0;
+			int arg_count = functionDefinition->argumentCount;
+
+			STACK_ITEM_TYPE tmpArgs[100] = { 0 };
+			if (arg_count == -1) {
+				arg_count = 1;
+				// Pop string into new instance stack
+				while (Pop(instance, &val), val != 0) {
+					tmpArgs[arg_count++] = val;
+				}
+
+				Push(entry->pInstance, 0);
+
+				for (; arg_count != 0; arg_count--) {
+					Push(entry->pInstance, tmpArgs[arg_count]);
+				}
+			}
+			else {
+				for (; arg_count != 0; arg_count--) {
+					Pop(instance, &val);
+					Push(entry->pInstance, val);
+				}
+			}
+
+			
+
+			// SUCCESS!
+			status = true;
+		}
+		else {
+			ERROR_MESSAGE("Function definition entrypoint out of bounds!");
+			status = false;
+		}
+	}
+	else {
+		ERROR_MESSAGE("Could not find function with specified ID.");
+		status = false;
+	}
+	return status;
 }

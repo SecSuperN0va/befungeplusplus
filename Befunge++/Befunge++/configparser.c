@@ -16,7 +16,7 @@ config_option_t ReadConfigSectionOfFile(FILE *fp) {
 	c = fgetc(fp);
 	fseek(fp, origPos, SEEK_SET);
 
-	if (c == '[') {	// '[' indicates the file starts with "[META]" which means it contains config
+	if (c == '[') {	// '[' indicates the file starts with "[META]" or [FUNCTION] which means it contains config
 		/* Do nothing (to move the cursor to the end of the line).*/
 		while (fgetc(fp) != '\n') {}
 
