@@ -6,6 +6,11 @@
 #include "befunge_error.h"
 #include "functions.h"
 
+# define POP(dest) Pop(instance, dest) 
+# define PUSH(src) Push(instance, src)
+# define STEP() TakeStep(instance)
+# define BACKSTEP() BackStep(instance)
+# define SETDIRECTION(dir) SetDirection(instance, dir)
 
 int commandCharLookup[MAX_ORD] = { CMD_NOP };
 bool(*commandTable[MAX_ORD])(PBEFUNGE_instance) = { FUNC_NOP };
@@ -45,6 +50,7 @@ void PopulateCommandCharLookup() {
 	commandCharLookup[ORD_SYSCALL] = CMD_SYSCALL;
 	commandCharLookup[ORD_OSI] = CMD_OSI;
 	commandCharLookup[ORD_FORK] = CMD_FORK;
+	commandCharLookup[ORD_CALL] = CMD_CALL;
 }
 
 void PopulateCommandTable() {
@@ -81,100 +87,101 @@ void PopulateCommandTable() {
 	commandTable[ORD_SYSCALL] = FUNC_SYSCALL;
 	commandTable[ORD_OSI] = FUNC_OSI;
 	commandTable[ORD_FORK] = FUNC_FORK;
+	commandTable[ORD_CALL] = FUNC_CALL;
 }
 
 bool CmdNop(PFUNGE_INSTANCE instance) {
-	TakeStep(instance);
+	STEP();
 	while (GetCommand(instance) == CMD_NOP) {
-		TakeStep(instance);
+		STEP();
 	}
-	BackStep(instance);
+	BACKSTEP();
 	return true;
 }
 
 bool CmdAdd(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a, b;
-	Pop(instance, &a);
-	Pop(instance, &b);
-	Push(instance, a + b);
+	POP(&a);
+	POP(&b);
+	PUSH(a + b);
 	return true;
 }
 
 bool CmdSubtract(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a, b;
-	Pop(instance, &a);
-	Pop(instance, &b);
-	Push(instance, b - a);
+	POP(&a);
+	POP(&b);
+	PUSH(b - a);
 	return true;
 }
 
 bool CmdMultiply(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a, b;
-	Pop(instance, &a);
-	Pop(instance, &b);
-	Push(instance, a * b);
+	POP(&a);
+	POP(&b);
+	PUSH(a * b);
 	return true;
 }
 
 bool CmdDivide(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a, b;
-	Pop(instance, &a);
-	Pop(instance, &b);
-	Push(instance, b / a);
+	POP(&a);
+	POP(&b);
+	PUSH(b / a);
 	return true;
 }
 
 bool CmdModulo(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a, b;
-	Pop(instance, &a);
-	Pop(instance, &b);
-	Push(instance, b % a);
+	POP(&a);
+	POP(&b);
+	PUSH(b % a);
 	return true;
 }
 
 bool CmdNot(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a;
-	Pop(instance, &a);
+	POP(&a);
 	if (a == 0) {
-		Push(instance, (STACK_ITEM_TYPE)1);
+		PUSH((STACK_ITEM_TYPE)1);
 	}
 	else {
-		Push(instance, (STACK_ITEM_TYPE)0);
+		PUSH((STACK_ITEM_TYPE)0);
 	}
 	return true;
 }
 
 bool CmdGreaterThan(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a, b;
-	Pop(instance, &a);
-	Pop(instance, &b);
+	POP(&a);
+	POP(&b);
 
 	if (b > a) {
-		Push(instance, 1);
+		PUSH(1);
 	}
 	else {
-		Push(instance, 0);
+		PUSH(0);
 	}
 	return true;
 }
 
 bool CmdMoveRight(PFUNGE_INSTANCE instance) {
-	SetDirection(instance, DIR_RIGHT);
+	SETDIRECTION(DIR_RIGHT);
 	return true;
 }
 
 bool CmdMoveLeft(PFUNGE_INSTANCE instance) {
-	SetDirection(instance, DIR_LEFT);
+	SETDIRECTION(DIR_LEFT);
 	return true;
 }
 
 bool CmdMoveUp(PFUNGE_INSTANCE instance) {
-	SetDirection(instance, DIR_UP);
+	SETDIRECTION(DIR_UP);
 	return true;
 }
 
 bool CmdMoveDown(PFUNGE_INSTANCE instance) {
-	SetDirection(instance, DIR_DOWN);
+	SETDIRECTION(DIR_DOWN);
 	return true;
 }
 
@@ -182,30 +189,30 @@ bool CmdMoveRand(PFUNGE_INSTANCE instance) {
 	int a;
 	srand((unsigned)time(0));
 	a = rand() % 4;	// random number between 0 and the number of directions available (4)
-	SetDirection(instance, a);
+	SETDIRECTION(a);
 	return true;
 }
 
 bool CmdHorizontalNullCheck(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a;
-	Pop(instance, &a);
+	POP(&a);
 	if (a == 0) {
-		SetDirection(instance, DIR_RIGHT);
+		SETDIRECTION(DIR_RIGHT);
 	}
 	else {
-		SetDirection(instance, DIR_LEFT);
+		SETDIRECTION(DIR_LEFT);
 	}
 	return true;
 }
 
 bool CmdVerticalNullCheck(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a;
-	Pop(instance, &a);
+	POP(&a);
 	if (a == 0) {
-		SetDirection(instance, DIR_DOWN);
+		SETDIRECTION(DIR_DOWN);
 	}
 	else {
-		SetDirection(instance, DIR_UP);
+		SETDIRECTION(DIR_UP);
 	}
 	return true;
 }
@@ -217,30 +224,30 @@ bool CmdStringMode(PFUNGE_INSTANCE instance) {
 
 bool CmdDuplicate(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a;
-	Pop(instance, &a);
-	Push(instance, a);
-	Push(instance, a);
+	POP(&a);
+	PUSH(a);
+	PUSH(a);
 	return true;
 }
 
 bool CmdSwap(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a, b;
-	Pop(instance, &a);
-	Pop(instance, &b);
-	Push(instance, a);
-	Push(instance, b);
+	POP(&a);
+	POP(&b);
+	PUSH(a);
+	PUSH(b);
 	return true;
 }
 
 bool CmdDiscard(PFUNGE_INSTANCE instance) {
-	Pop(instance, NULL);
+	POP(NULL);
 	return true;
 }
 
 bool CmdIntegerOut(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a;
 	char tempBuffer[20];
-	Pop(instance, &a);
+	POP(&a);
 	snprintf(tempBuffer, sizeof(tempBuffer), "%d ", (unsigned int)a);
 	OutputString(instance, tempBuffer, strlen(tempBuffer));
 	return true;
@@ -249,14 +256,14 @@ bool CmdIntegerOut(PFUNGE_INSTANCE instance) {
 bool CmdASCIIOut(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE a;
 	char tempBuffer[20];
-	Pop(instance, &a);
+	POP(&a);
 	snprintf(tempBuffer, sizeof(tempBuffer), "%c", a);
 	OutputString(instance, tempBuffer, 1);
 	return true;
 }
 
 bool CmdBridge(PFUNGE_INSTANCE instance) {
-	TakeStep(instance);
+	STEP();
 	return true;
 }
 
@@ -283,7 +290,7 @@ bool CmdIntegerIn(PFUNGE_INSTANCE instance) {
 		if (instance->dynamicSettings->hProgramIn == stdin)
 			fgetc(instance->dynamicSettings->hProgramIn);
 	}
-	Push(instance, a - 0x30);
+	PUSH(a - 0x30);
 	return true;
 }
 
@@ -300,20 +307,37 @@ bool CmdASCIIIn(PFUNGE_INSTANCE instance) {
 		if (instance->dynamicSettings->hProgramIn == stdin)
 			fgetc(instance->dynamicSettings->hProgramIn);
 	}
-	Push(instance, a);
+	PUSH(a);
 	return true;
 }
 
 bool CmdTerminate(PFUNGE_INSTANCE instance) {
-	// TODO: Add termination sequence!
-	RegisterInstanceTermination(instance);
-	return true;
+	bool status = false;
+
+	if (instance->dynamicSettings->depth != 0) {
+		STACK_ITEM_TYPE row, column, direction;
+		POP(&row);
+		POP(&column);
+		POP(&direction);
+
+		instance->ipState->position[AXIS_X] = column;
+		instance->ipState->position[AXIS_Y] = row;
+		instance->ipState->direction = direction;
+
+		instance->dynamicSettings->depth--;
+		status = false;
+	}
+	else {
+		RegisterInstanceTermination(instance);
+		status = true;
+	}
+	return status;
 }
 
 bool CmdLoadReg(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE registerId, value;
-	Pop(instance, &registerId);
-	Pop(instance, &value);
+	POP(&registerId);
+	POP(&value);
 
 	if (registerId < REGISTER_COUNT) {
 		instance->registers[registerId] = value;
@@ -327,11 +351,11 @@ bool CmdLoadReg(PFUNGE_INSTANCE instance) {
 
 bool CmdGetReg(PFUNGE_INSTANCE instance) {
 	STACK_ITEM_TYPE registerId, value;
-	Pop(instance, &registerId);
+	POP(&registerId);
 	
 	if (registerId < REGISTER_COUNT) {
 		value = instance->registers[registerId];
-		Push(instance, value);
+		PUSH(value);
 	}
 	else {
 		fprintf(stderr, "Invalid register ID: %d\n", registerId);
@@ -347,75 +371,75 @@ bool CmdSyscall(PFUNGE_INSTANCE instance) {
 }
 
 bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance) {
-STACK_ITEM_TYPE OsiId;
-STACK_ITEM_TYPE a;
-char c = '\0';
-char filePathBuffer[2048] = { 0 };
-int file_path_length = 0;
-int fileMode = 0;
+	STACK_ITEM_TYPE OsiId;
+	STACK_ITEM_TYPE a;
+	char c = '\0';
+	char filePathBuffer[2048] = { 0 };
+	int file_path_length = 0;
+	int fileMode = 0;
 
 
-Pop(instance, &OsiId);
+	POP(&OsiId);
 
-switch (OsiId) {
-case OSI_FILE_OPEN:
-	// Pop the file mode from the stack
-	Pop(instance, &a);
-	fileMode = (int)a;
+	switch (OsiId) {
+	case OSI_FILE_OPEN:
+		// Pop the file mode from the stack
+		POP(&a);
+		fileMode = (int)a;
 
-	// Pop the file path from the stack
-	do {
-		Pop(instance, &a);
-		c = (char)a;
-		strncat(filePathBuffer, &c, 1);
-		file_path_length++;
-	} while (c != '\0');
+		// Pop the file path from the stack
+		do {
+			POP(&a);
+			c = (char)a;
+			strncat(filePathBuffer, &c, 1);
+			file_path_length++;
+		} while (c != '\0');
 
-	FILE* p = NULL;
-	switch (fileMode) {
-	case FLAG_FILE_MODE_READ:
-		p = fopen(filePathBuffer, "r");
-		if (p != NULL) {
-			SetProgramInput(instance, p);
+		FILE* p = NULL;
+		switch (fileMode) {
+		case FLAG_FILE_MODE_READ:
+			p = fopen(filePathBuffer, "r");
+			if (p != NULL) {
+				SetProgramInput(instance, p);
+			}
+			else {
+				ERROR_MESSAGE("Could not open file for reading");
+				goto ERROR_CASE;
+			}
+			break;
+		case FLAG_FILE_MODE_WRITE:
+			p = fopen(filePathBuffer, "w");
+			if (p != NULL) {
+				SetProgramOutput(instance, p);
+			}
+			else {
+				ERROR_MESSAGE("Could not open file for writing");
+				goto ERROR_CASE;
+			}
+			break;
 		}
-		else {
-			ERROR_MESSAGE("Could not open file for reading");
+		break;
+	case OSI_FILE_CLOSE:
+		// Pop the mode to operate on.
+		POP(&a);
+		fileMode = (int)a;
+		switch (fileMode) {
+		case FLAG_FILE_MODE_READ:
+			ResetProgramInput(instance);
+			break;
+		case FLAG_FILE_MODE_WRITE:
+			ResetProgramOutput(instance);
+			break;
+		default:
+			ERROR_MESSAGE("Invalid mode value for OSI_FILE_CLOSE");
 			goto ERROR_CASE;
 		}
-		break;
-	case FLAG_FILE_MODE_WRITE:
-		p = fopen(filePathBuffer, "w");
-		if (p != NULL) {
-			SetProgramOutput(instance, p);
-		}
-		else {
-			ERROR_MESSAGE("Could not open file for writing");
-			goto ERROR_CASE;
-		}
-		break;
-	}
-	break;
-case OSI_FILE_CLOSE:
-	// Pop the mode to operate on.
-	Pop(instance, &a);
-	fileMode = (int)a;
-	switch (fileMode) {
-	case FLAG_FILE_MODE_READ:
-		ResetProgramInput(instance);
-		break;
-	case FLAG_FILE_MODE_WRITE:
-		ResetProgramOutput(instance);
 		break;
 	default:
-		ERROR_MESSAGE("Invalid mode value for OSI_FILE_CLOSE");
-		goto ERROR_CASE;
+	ERROR_CASE:
+		OutputString(instance, "Can not process OSI ID", 22);
+		return false;
 	}
-	break;
-default:
-ERROR_CASE:
-	OutputString(instance, "Can not process OSI ID", 22);
-	return false;
-}
 }
 
 bool CmdFork(PFUNGE_INSTANCE instance) {
@@ -431,7 +455,7 @@ bool CmdFork(PFUNGE_INSTANCE instance) {
 
 	// Pop the function identifier
 	STACK_ITEM_TYPE functionId = 0;
-	Pop(instance, &functionId);
+	POP(&functionId);
 	fprintf(stderr, "Starting function %d\n", functionId);
 
 	// Identify the matching function by functionId
@@ -452,7 +476,7 @@ bool CmdFork(PFUNGE_INSTANCE instance) {
 
 			// Pop the FAF/WFR indicator
 			STACK_ITEM_TYPE fafwfrIndicator = 0;
-			Pop(instance, &fafwfrIndicator);
+			POP(&fafwfrIndicator);
 
 			if (fafwfrIndicator) {
 				fprintf(stderr, "Starting function with WFR mechanism\n");
@@ -479,7 +503,7 @@ bool CmdFork(PFUNGE_INSTANCE instance) {
 			if (arg_count == -1) {
 				arg_count = 1;
 				// Pop string into new instance stack
-				while (Pop(instance, &val), val != 0) {
+				while (POP(&val), val != 0) {
 					tmpArgs[arg_count++] = val;
 				}
 
@@ -491,12 +515,10 @@ bool CmdFork(PFUNGE_INSTANCE instance) {
 			}
 			else {
 				for (; arg_count != 0; arg_count--) {
-					Pop(instance, &val);
+					POP(&val);
 					Push(entry->pInstance, val);
 				}
 			}
-
-			
 
 			// SUCCESS!
 			status = true;
@@ -511,4 +533,71 @@ bool CmdFork(PFUNGE_INSTANCE instance) {
 		status = false;
 	}
 	return status;
+}
+
+bool CmdCall(PFUNGE_INSTANCE instance) {
+	bool status = true;
+	STACK_ITEM_TYPE column, row, arg_count, val;
+	STACK_ITEM_TYPE origA, origB;
+	int count = 0;
+	int next_row, next_col = 0;
+
+	POP(&column);
+	POP(&row);
+	POP(&arg_count);
+
+	// fprintf(stderr, "Row: %d, Column: %d, ArgCount: %d\n", row, column, arg_count);
+
+	origA = instance->registers[REG_A];
+	origB = instance->registers[REG_B];
+
+	instance->registers[REG_A] = column;
+	instance->registers[REG_B] = row;
+
+	STACK_ITEM_TYPE * tmpArgs = NULL;
+	
+	if (arg_count == -1) {
+		tmpArgs = (STACK_ITEM_TYPE*)calloc(256, sizeof(STACK_ITEM_TYPE));
+		// Pop each character of a string from the stack.
+		for (count = 0; POP(&val), val != 0; count++) {
+			tmpArgs[count] = val;
+		}
+		/*count++;
+		tmpArgs[count] = 0;*/
+	}
+	else if (arg_count != 0) {
+		tmpArgs = (STACK_ITEM_TYPE*)calloc(arg_count, sizeof(STACK_ITEM_TYPE));
+		
+		// Pop args from stack.
+		for (count = 0; count < arg_count; count++) {
+			POP(&tmpArgs[count]);
+		}
+		count--;
+	}
+
+	// Push the return co-ordinates to the stack
+	// STEP();
+	next_col = instance->ipState->position[AXIS_X];
+	next_row = instance->ipState->position[AXIS_Y];
+	// BACKSTEP();
+
+	PUSH(instance->ipState->direction);
+	PUSH(next_col);
+	PUSH(next_row);
+
+	if (arg_count != 0) {
+		for (; count >= 0; count--) {
+			PUSH(tmpArgs[count]);
+		}
+	}
+
+	instance->ipState->position[AXIS_Y] = instance->registers[REG_B];
+	instance->ipState->position[AXIS_X] = instance->registers[REG_A];
+
+	instance->registers[REG_A] = origA;
+	instance->registers[REG_B] = origB;
+
+	instance->dynamicSettings->depth++;
+
+	return true;
 }

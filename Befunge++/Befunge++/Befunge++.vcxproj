@@ -141,7 +141,8 @@
     <ClInclude Include="SyscallWindows.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Forking.md" />
+    <None Include="Calls.md" />
+    <None Include="Modularisation.md" />
     <None Include="OS_Interaction.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

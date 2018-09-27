@@ -37,6 +37,7 @@
 #define CMD_OSI 'o'
 
 #define CMD_FORK 'F'
+#define CMD_CALL 'C'
 
 #define FLAG_FILE_MODE_READ 0
 #define FLAG_FILE_MODE_WRITE 1
@@ -74,6 +75,7 @@ bool CmdGetReg(PFUNGE_INSTANCE instance);
 bool CmdSyscall(PFUNGE_INSTANCE instance);
 bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance);
 bool CmdFork(PFUNGE_INSTANCE instance);
+bool CmdCall(PFUNGE_INSTANCE instance);
 
 #define ORD_NOP 0
 #define ORD_ADD 1
@@ -109,8 +111,9 @@ bool CmdFork(PFUNGE_INSTANCE instance);
 #define ORD_SYSCALL 29
 #define ORD_OSI 30
 #define ORD_FORK 31
+#define ORD_CALL 32
 
-#define MAX_ORD 32
+#define MAX_ORD 33
 
 
 int commandCharLookup[];
@@ -151,6 +154,7 @@ void PopulateCommandCharLookup();
 #define FUNC_SYSCALL CmdSyscall
 #define FUNC_OSI CmdOperatingSystemInteraction
 #define FUNC_FORK CmdFork
+#define FUNC_CALL CmdCall
 
 
 bool(*commandTable[])(PBEFUNGE_CONTROL);

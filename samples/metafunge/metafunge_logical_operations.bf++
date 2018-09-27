@@ -1,0 +1,34 @@
+[META]
+dimensions.rows = 30
+dimensions.columns = 50
+context.entrypoint.row = 0
+context.entrypoint.column = 0
+#notes = Perform a logical OR operation on 2 bit values
+
+> && 1r 2r                                   v
+> 2R." RO",,,1R." =",,1R2R 290C 0R.    25*, v>
+> 2R." DNA",,,,1R." =",,1R2R 296+0C 0R.25*,v>
+>2R." ROX",,,,1R." =",,1R2R 273*0C 0R.25*,v>
+
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@
+v "OR function"
+>v >v
+v_!|#      
+>$>> 1>0r@
+    >0^
+
+v "AND function"
+> v
+ v_$v
+v_  >0v
+>  1  >0r@
+
+v "XOR function"
+>1r2r2R1R 290C 0R     v
+        v!R0C0+692R1R2_0v
+      v1_0v      
+@r0<<<<<<<<<<<<<<<<<<<<<<
+ 

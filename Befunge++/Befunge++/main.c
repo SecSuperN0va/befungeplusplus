@@ -85,21 +85,21 @@ int StartController(PBEFUNGE_CONTROL control) {
 
 			tickStatus = ProcessTick(instance);
 
-			if (tickStatus == STATUS_TERMINATED) {
-				RegisterInstanceTermination(instance);
-			}
-			else if (tickStatus == STATUS_OK) {
-				// Increment the necessary internal tracking values
+			switch (tickStatus) {
+			case STATUS_TERMINATED:
+				break;
+			case STATUS_OK:
+				// Increment the necessary internal tracking values and fall through
 				TakeStep(instance);
-
+			case STATUS_CALLED:
 				// Apply tick delay if necessary
 				if (instance->staticSettings->tickDelay) {
 					SLEEP(instance->staticSettings->tickDelay);
 				}
-
-			}
-			else {
+				break;
+			default:
 				ERROR_MESSAGE("WTF??? I didn't even make any other error codes!");
+				break;
 			}
 
 			// Move to the next instance

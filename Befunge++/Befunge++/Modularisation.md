@@ -1,5 +1,17 @@
 # Befunge++ Modularisation
 
+## Function Calls
+In order to make a call to a "function", any arguments to be passed into the function must be pushed to the stack, 
+followed by a single value denoting the number of arguments which have just been pushed to stack. In order to pass
+a string into a function, the argument count should be -1. The co-ordinates of the callee must then be pushed onto 
+the stack, along with the direction indicator of the current execution flow. The 'C' opcode can then be used to process the call. 
+
+Upon execution, the callee coordinates are popped and stored in registers A and B for use in modifying the current
+instance's cursor position. The caller then pops the argument count and the relevant number of arguments from the 
+current stack, ready for pushing to the new stack.
+
+
+
 ## Module Specification
 
 In order to achieve modularisation of befunge++ programs, we can define small standalone programs (or functions) within the bf++ source, then reference them by a numerical ID within a calling program.

@@ -83,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="OS_Interaction.md" />
-    <None Include="Forking.md" />
+    <None Include="Calls.md" />
+    <None Include="Modularisation.md" />
   </ItemGroup>
 </Project>

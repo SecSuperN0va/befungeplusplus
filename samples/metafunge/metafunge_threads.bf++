@@ -1,0 +1,48 @@
+[META]
+dimensions.rows = 21
+dimensions.columns = 32
+context.entrypoint.row = 0
+context.entrypoint.column = 0
+
+[FUNCTION]
+function.id = 1
+function.entrypoint.row = 5
+function.entrypoint.column = 0
+function.arguments.count = -1
+
+[FUNCTION]
+function.id = 2
+function.entrypoint.row = 10
+function.entrypoint.column = 0
+
+[FUNCTION]
+function.id = 3
+function.entrypoint.row = 15
+function.entrypoint.column = 0
+
+[FUNCTION]
+function.id = 4
+function.entrypoint.row = 20
+function.entrypoint.column = 0
+
+>052*"NOITCNUF"11Fv@
+>052*"gnitset"11F@>
+
+
+
+>:#,_$@
+
+
+
+
+>52*"2 NOITCNUF",,,,,,,,,,,13F@
+
+
+
+
+>52*"3 NOITCNUF",,,,,,,,,,,14F@
+
+
+
+
+>52*"4 NOITCNUF",,,,,,,,,,,@

@@ -33,6 +33,7 @@ void InitialiseStaticControlSettings(PSTATIC_CONTROL_SETTINGS *settings, bool sh
 void InitialiseDynamicControlSettings(PDYNAMIC_CONTROL_SETTINGS *settings) {
 	*settings = (PDYNAMIC_CONTROL_SETTINGS)calloc(1, sizeof(DYNAMIC_CONTROL_SETTINGS));
 	(*settings)->stringMode = false;
+	(*settings)->depth = 0;
 	(*settings)->hProgramIn = stdin;
 	(*settings)->hProgramOut = stdout;
 	return;
@@ -297,6 +298,7 @@ void PrintStackState(PFUNGE_INSTANCE instance) {
 
 
 	fprintf(stderr, buffer);
+	fprintf(stderr, "Function call depth: %d\n", instance->dynamicSettings->depth);
 }
 
 /*
@@ -548,36 +550,52 @@ int ProcessTick(PFUNGE_INSTANCE instance) {
 	int retval = STATUS_OK;
 	bool commandStatus = false;
 	char command = GetCommand(instance);
-	
-	if (command != CMD_END) {
-		if (instance->dynamicSettings->stringMode) {
-			// If the current context is string mode process the command as if it were ASCII, unless command is " char
-			if (command == CMD_STRING) {
-				ToggleStringMode(instance);
-			}
-			else {
-				Push(instance, (STACK_ITEM_TYPE)command);
-			}
-			commandStatus = true;
-		}
-		else if (command >= 0x30 && command <=0x39) {
-			Push(instance, (STACK_ITEM_TYPE)(command - 0x30));
-			commandStatus = true;
+
+
+	if (instance->dynamicSettings->stringMode) {
+		// If the current context is string mode process the command as if it were ASCII, unless command is " char
+		if (command == CMD_STRING) {
+			ToggleStringMode(instance);
 		}
 		else {
-			if (commandStatus = AcceptCommand(instance, command)) {
-				// Command success
-				retval = STATUS_OK;
-			}
-			else {
-				retval = STATUS_BAD_COMMAND_RESULT;
-			}
+			Push(instance, (STACK_ITEM_TYPE)command);
 		}
+		commandStatus = true;
+	}
+	else if (command >= 0x30 && command <= 0x39) {
+		Push(instance, (STACK_ITEM_TYPE)(command - 0x30));
+		commandStatus = true;
 	}
 	else {
-		retval = STATUS_TERMINATED;
+		commandStatus = AcceptCommand(instance, command);
 	}
-
+	switch (command) {
+	case CMD_CALL:
+		if (commandStatus) {
+			retval = STATUS_CALLED;
+		}
+		else {
+			retval = STATUS_BAD_COMMAND_RESULT;
+		}
+		break;
+	case CMD_END:
+		if (commandStatus) {
+			retval = STATUS_TERMINATED;
+		}
+		else {
+			retval = STATUS_OK;
+		}
+		break;
+	default:
+		if (commandStatus) {
+			// Command success
+			retval = STATUS_OK;
+		}
+		else {
+			retval = STATUS_BAD_COMMAND_RESULT;
+		}
+		break;
+	}
 	return retval;
 }
 
@@ -604,9 +622,6 @@ bool AcceptCommand(PFUNGE_INSTANCE instance, char commandChar) {
 			char* msg = (char*)calloc(outputLen, sizeof(char));
 			snprintf(msg, outputLen, format, commandChar);
 			ERROR_MESSAGE(msg);
-		}
-		else {
-			ERROR_MESSAGE("Instruction appears to have failed (based on return value)");
 		}
 	}
 

@@ -24,6 +24,7 @@
 #define STATUS_OK 0
 #define STATUS_TERMINATED -1
 #define STATUS_BAD_COMMAND_RESULT -2
+#define STATUS_CALLED -3
 
 #define REG_A 0
 #define REG_B 1
@@ -44,6 +45,7 @@ typedef struct StaticControlSettings {
 
 typedef struct DynamicControlSettings {
 	bool stringMode;
+	int depth;
 
 	// FILE_ACCESS variables
 	FILE* hProgramOut;
