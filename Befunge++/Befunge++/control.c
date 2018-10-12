@@ -220,30 +220,27 @@ void PrintProgramState(PFUNGE_INSTANCE instance) {
 			else {
 				isSelected = false;
 			}
-			if (0x20 <= instance->gridStruct->grid[row][column] && instance->gridStruct->grid[row][column] <= 0x80) {
+			if (instance->gridStruct->grid[row][column] == '%') {
+				if (isSelected)
+					snprintf(tmpBuf, sizeof(tmpBuf), "%c[101;1m%%%%%c[%dm", 0x1B, 0x1b, 0);
+				else
+					snprintf(tmpBuf, sizeof(tmpBuf), "%%%%");
+			}
+			else if (0x20 <= instance->gridStruct->grid[row][column] && instance->gridStruct->grid[row][column] <= 0x80) {
 				if (isSelected) 
 					snprintf(tmpBuf, sizeof(tmpBuf), "%c[101;1m%c%c[%dm", 0x1B, instance->gridStruct->grid[row][column], 0x1b, 0);
 				else 
 					snprintf(tmpBuf, sizeof(tmpBuf), "%c", instance->gridStruct->grid[row][column]);
-
-				//if(isSelected)
-				//	strncat_s(buffer, total_required, "\e[1m", 4);
-				strncat(buffer, tmpBuf, sizeof(tmpBuf));
-				//if (isSelected)
-				//	strncat_s(buffer, total_required, "\e[0m", 4);
-				memset(tmpBuf, 0, sizeof(tmpBuf));
-
 			}
 			else {
 				if (isSelected)
 					snprintf(tmpBuf, sizeof(tmpBuf), "%c[101;1m.%c[%dm", 0x1B, 0x1b, 0);
 				else
 					snprintf(tmpBuf, sizeof(tmpBuf), ".");
-				strncat(buffer, tmpBuf, sizeof(tmpBuf));
-				memset(tmpBuf, 0, sizeof(tmpBuf));
-			}
 				
-
+			}
+			strncat(buffer, tmpBuf, sizeof(tmpBuf));
+			memset(tmpBuf, 0, sizeof(tmpBuf));
 		}
 		strncat(buffer, "|\n", sizeof(tmpBuf));
 	}
@@ -519,7 +516,7 @@ void TakeStep(PFUNGE_INSTANCE instance) {
 
 void BackStep(PFUNGE_INSTANCE instance) {
 	int origDirection = instance->ipState->direction;
-	int backStepDirection = NULL;
+	int backStepDirection = (int)NULL;
 
 	switch (origDirection) {
 	case DIR_RIGHT:
@@ -540,7 +537,7 @@ void BackStep(PFUNGE_INSTANCE instance) {
 	}
 
 	SetDirection(instance, backStepDirection);
-	TakeStep(instance, backStepDirection);
+	TakeStep(instance);
 	SetDirection(instance, origDirection);
 
 	return;

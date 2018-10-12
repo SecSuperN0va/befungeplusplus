@@ -1,0 +1,54 @@
+[META]
+dimensions.rows = 35
+dimensions.columns = 50
+context.entrypoint.page = 0
+context.entrypoint.row = 0
+context.entrypoint.column = 0
+
+[PAGE]
+page.id = 0
+page.dimensions.rows = 5
+page.dimensions.columns = 50
+page.name = "main"
+
+> && 1r 2r  1R2R 274*0C                      v
+> 2R." RO",,,1R." =",,1R2R 290C 0R.    25*, v>
+> 2R." DNA",,,,1R." =",,1R2R 296+0C 0R.25*,v>
+>2R." ROX",,,,1R." =",,1R2R 273*0C 0R.25*,v>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>@
+
+[PAGE]
+page.id = 1
+page.dimensions.rows = 5
+page.dimensions.columns = 11
+page.name = "or"
+
+v
+>v >v
+v_!|#     
+>$>> 1>0r@
+    >0^
+
+[PAGE]
+page.id = 2
+page.dimensions.rows = 5
+page.dimensions.columns = 11
+page.name = "and"
+
+v
+> v
+ v_$v
+v_  >0v
+>  1  >0r@
+
+[PAGE]
+page.id = 3
+page.dimensions.rows = 5
+page.dimensions.columns = 33
+page.name = "or"
+
+v
+>1R\1r\2R\2r2R1R 290C 0R     v
+               v!R0C0+692R1R2_0v
+             v1_0v      
+@r1r2r0<<<<<<<<<<<<<<<<<<<<<<<<<

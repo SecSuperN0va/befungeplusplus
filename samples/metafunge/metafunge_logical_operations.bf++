@@ -1,11 +1,10 @@
 [META]
-dimensions.rows = 30
+dimensions.rows = 35
 dimensions.columns = 50
 context.entrypoint.row = 0
 context.entrypoint.column = 0
-#notes = Perform a logical OR operation on 2 bit values
 
-> && 1r 2r                                   v
+> && 1r 2r  1R2R 274*0C                      v
 > 2R." RO",,,1R." =",,1R2R 290C 0R.    25*, v>
 > 2R." DNA",,,,1R." =",,1R2R 296+0C 0R.25*,v>
 >2R." ROX",,,,1R." =",,1R2R 273*0C 0R.25*,v>
@@ -27,8 +26,12 @@ v_  >0v
 >  1  >0r@
 
 v "XOR function"
->1r2r2R1R 290C 0R     v
-        v!R0C0+692R1R2_0v
-      v1_0v      
-@r0<<<<<<<<<<<<<<<<<<<<<<
- 
+>1R\1r\2R\2r2R1R 290C 0R     v
+               v!R0C0+692R1R2_0v
+             v1_0v      
+@r1r2r0<<<<<<<<<<<<<<<<<<<<<<<<<
+
+v "XOR Value function"
+>1r2r>2R2%1R2% v
+     |:R0C0*372<
+@<<<<<<<<<<<<<<<

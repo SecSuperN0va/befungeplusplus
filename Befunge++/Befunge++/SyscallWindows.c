@@ -179,5 +179,5 @@ done:
 	{
 		CloseHandle(hMap);
 	}
-	return 0;
+	return;
 }

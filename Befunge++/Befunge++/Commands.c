@@ -440,6 +440,7 @@ bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance) {
 		OutputString(instance, "Can not process OSI ID", 22);
 		return false;
 	}
+	return true;
 }
 
 bool CmdFork(PFUNGE_INSTANCE instance) {

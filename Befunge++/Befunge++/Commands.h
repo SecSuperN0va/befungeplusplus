@@ -157,6 +157,6 @@ void PopulateCommandCharLookup();
 #define FUNC_CALL CmdCall
 
 
-bool(*commandTable[])(PBEFUNGE_CONTROL);
+bool(*commandTable[])(PFUNGE_INSTANCE);
 
 void PopulateCommandTable();

@@ -12,4 +12,4 @@ void freeGrid(char** grid, int rows);
 
 PBEFUNGE_GRID CreateBefungeGrid(int columns, int rows);
 
-void populateGrid(PBEFUNGE_GRID grid);
+void PopulateGridWithProgram(PBEFUNGE_GRID grid, char* programString);

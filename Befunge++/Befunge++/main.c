@@ -10,6 +10,7 @@
 #include "functions.h"
 #include "befunge_error.h"
 #include "Commands.h"
+#include "page_manager.h"
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -133,6 +134,7 @@ int main(int argc, char* argv[]) {
 
 	PBEFUNGE_METADATA metadata;
 	PFUNCTION_LIST functions;
+	PPAGE_CONTROL_LIST pages;
 
 	char* programString = { 0 };
 
@@ -154,20 +156,27 @@ int main(int argc, char* argv[]) {
 			}
 			if (args.args[ARG_PROGRAM_FILE] != NULL) {
 				// Open handle to the file
-				if ((fp = fopen(args.args[ARG_PROGRAM_FILE], "r")) != NULL) {
+				if ((fp = fopen(args.args[ARG_PROGRAM_FILE], "rb")) != NULL) {
 					// Read any config from the top of the file
 					metadata = LoadProgramMetadata(fp);
-					functions = LoadAllFunctionDefinitions(fp);
+					//functions = LoadAllFunctionDefinitions(fp);
 					
-					// Identify the remaining file size so we can allocate a buffer of the correct size
-					size_t origPos = ftell(fp);
-					fseek(fp, 0L, SEEK_END);
-					programFileSize = ftell(fp) - origPos;
-					fseek(fp, origPos, SEEK_SET);
+					//// Identify the remaining file size so we can allocate a buffer of the correct size
+					//size_t origPos = ftell(fp);
+					//fseek(fp, 0L, SEEK_END);
+					//programFileSize = ftell(fp) - origPos;
+					//fseek(fp, origPos, SEEK_SET);
 
-					// Allocate the necessary buffer
-					programString = (char*)calloc(1, programFileSize * sizeof(char) + 1);
-					fread(programString, 1, programFileSize, fp);
+					//// Allocate the necessary buffer
+					//programString = (char*)calloc(1, programFileSize * sizeof(char) + 1);
+					//fread(programString, 1, programFileSize, fp);
+
+					// Load all pages from file
+					size_t firstPageOffset = GetNextPageStartOffset(fp);
+					if (firstPageOffset != -1) {
+						fseek(fp, firstPageOffset, SEEK_SET);
+						pages = LoadAllPages(fp);
+					}
 
 					fclose(fp);
 				}
@@ -197,8 +206,12 @@ int main(int argc, char* argv[]) {
 				}
 			}
 
+
+
+
+
 			// Start the interpretter with the necessary args
-			runProgram(programString, functions, tickDelay, ofp, (bool) args.args[ARG_TOGGLE_OUTPUT], metadata, args.args[ARG_SINGLE_STEP]);
+			runProgram(programString, NULL, tickDelay, ofp, (bool) args.args[ARG_TOGGLE_OUTPUT], metadata, args.args[ARG_SINGLE_STEP]);
 			if (ofp != NULL)
 				fclose(ofp);
 		}

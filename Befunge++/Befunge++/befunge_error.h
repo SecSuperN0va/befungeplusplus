@@ -7,3 +7,4 @@
 
 #define MAX_MESSAGE_SIZE 2048
 
+char* get_time_string();

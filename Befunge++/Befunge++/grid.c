@@ -1,4 +1,5 @@
 #include "grid.h"
+#include "befunge_error.h"
 #include <stdlib.h>
 
 char** createEmptyGrid(int columns, int rows) {
@@ -37,13 +38,39 @@ PBEFUNGE_GRID CreateBefungeGrid(int columns, int rows) {
 }
 
 
-void populateGrid(PBEFUNGE_GRID grid) {
-	int i, j, counter = 0;
-
-	for (j = 0; j < grid->rows; j++) {
-		for (i = 0; i < grid->columns; i++) {
-			grid->grid[i][j] = counter++;
+void PopulateGridWithProgram(PBEFUNGE_GRID grid, char* programString) {
+	int columnCount = 0;
+	int rowCount = 0;
+	unsigned int ptr = 0;
+	char c = '\0';
+	int i, j = 0;
+	// Fill the entire grid with NOPS
+	for (i = 0; i < grid->rows; i++) {
+		for (j = 0; j < grid->columns; j++) {
+			grid->grid[i][j] = 0x20;
 		}
 	}
+
+	while (ptr < strlen(programString)) {
+		if (rowCount >= grid->rows || columnCount >= grid->columns) {
+			ERROR_MESSAGE("Incorrect dimensions supplied, too many rows or columns for grid.")
+			break;
+		}
+		if ((ptr < strlen(programString) - 1
+			&& (programString[ptr] == '\r' && programString[ptr + 1] == '\n'))
+			|| (programString[ptr] == '\r' || programString[ptr] == '\n')
+			|| columnCount == grid->columns) {
+			if (programString[ptr] == '\r' && programString[ptr + 1] == '\n') {
+				ptr++;
+			}
+			ptr++;
+			rowCount++;
+			columnCount = 0;
+			continue;
+		}
+		c = programString[ptr++];
+		grid->grid[rowCount][columnCount++] = c;
+	}
+
 	return;
 }

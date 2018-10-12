@@ -125,6 +125,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="control.c" />
     <ClCompile Include="meta.c" />
+    <ClCompile Include="page_manager.c" />
     <ClCompile Include="SyscallWindows.c" />
   </ItemGroup>
   <ItemGroup>
@@ -137,6 +138,7 @@
     <ClInclude Include="grid.h" />
     <ClInclude Include="inline.h" />
     <ClInclude Include="meta.h" />
+    <ClInclude Include="page_manager.h" />
     <ClInclude Include="Syscalls.h" />
     <ClInclude Include="SyscallWindows.h" />
   </ItemGroup>
