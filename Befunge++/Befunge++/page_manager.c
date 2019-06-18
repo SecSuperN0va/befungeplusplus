@@ -37,7 +37,7 @@ size_t GetNextPageStartOffset(FILE* fp) {
 	fseek(fp, origPos, SEEK_SET);
 
 
-	while (ftell(fp) < maxOffset) {
+	while ((unsigned long)ftell(fp) < maxOffset - sizeof(pageTag)) {
 		tmpOffset = ftell(fp);
 		fread(tmp, sizeof(char), sizeof(pageTag), fp);
 		if (!strncmp(pageTag, tmp, sizeof(pageTag) -1)) {
@@ -79,7 +79,7 @@ PPAGE_CONTROL LoadSinglePage(FILE* fp) {
 					control->dimensions.columns = atoi(config->value);
 				}
 				if (!strcmp("page.name", config->key)) {
-					control->name = (char*)calloc(1, strlen(config->value));
+					control->name = (char*)calloc(1, strlen(config->value) + 1);
 					memcpy(control->name, config->value, strlen(config->value));
 				}
 
@@ -125,7 +125,7 @@ PPAGE_CONTROL LoadSinglePage(FILE* fp) {
 
 		control->grid = CreateBefungeGrid(control->dimensions.columns, control->dimensions.rows);
 		PopulateGridWithProgram(control->grid, programString);
-		DEBUG_MESSAGE("Loaded program into page...");
+		DEBUG_MESSAGE("Loaded page %s...", control->name);
 	}
 
 	return control;

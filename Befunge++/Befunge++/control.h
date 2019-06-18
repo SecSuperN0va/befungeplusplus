@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "grid.h"
 #include "meta.h"
-#include "functions.h"
+#include "page_manager.h"
 #include <stdbool.h>
 
 
@@ -33,8 +33,17 @@
 
 #define REGISTER_COUNT 4
 
-typedef int POSITION[N_DIMENSIONS];
 typedef STACK_ITEM_TYPE REGISTERS[REGISTER_COUNT];
+
+/*
+	CORE STRUCTURES
+*/
+
+typedef enum BefungeMode {
+	MODE_STANDARD = 0,
+	MODE_PAGED,
+	MODE_FUNCTIONS,
+} BEFUNGE_MODE;
 
 typedef struct StaticControlSettings {
 	bool singleStepMode;
@@ -54,7 +63,7 @@ typedef struct DynamicControlSettings {
 
 typedef struct InstructionPointerState {
 	int direction;
-	POSITION position;
+	GRID_POINT position;
 } INSTRUCTION_POINTER_STATE, *PINSTRUCTION_POINTER_STATE;
 
 typedef struct FungeStackState {
@@ -62,34 +71,45 @@ typedef struct FungeStackState {
 	int stackPointer;
 } FUNGE_STACK_STATE, *PFUNGE_STACK_STATE;
 
-typedef struct FungeInstance {
-	PSTATIC_CONTROL_SETTINGS staticSettings;
-	PDYNAMIC_CONTROL_SETTINGS dynamicSettings;
-	PINSTRUCTION_POINTER_STATE ipState;
-	PFUNGE_STACK_STATE stackState;
-	PBEFUNGE_GRID gridStruct;
-	REGISTERS registers;
+typedef struct FungeOutputState {
 	char* output;
 	int outputSize;
 	FILE* outputFile;
-	void* parent;
-} FUNGE_INSTANCE, *PFUNGE_INSTANCE;
+} FUNGE_OUTPUT_STATE, *PFUNGE_OUTPUT_STATE;
 
-typedef struct InstanceList {
-	void* previous;
-	void* pInstance;
-	void* next;
-} INSTANCE_LIST, *PINSTANCE_LIST;
+typedef struct FungePageManager {
+	PPAGE_CONTROL_LIST pPageControlList;
+	PPAGE_CONTROL pCurrentPageControl;
+	PFUNGE_STACK_STATE pStackState;
+	REGISTERS registers;
+	PINSTRUCTION_POINTER_STATE pIpState;
+} FUNGE_PAGE_MANAGER, *PFUNGE_PAGE_MANAGER;
 
-void InitialiseFungeInstance(PFUNGE_INSTANCE instance, void* parent, char* programString, int tickDelay, FILE* outputFile, bool showState, bool singleStep, POSITION entrypoint, GRID_DIMENSIONS dimensions);
+typedef struct BefungeProgramConfig {
+	BEFUNGE_MODE mode;
+	union programContent {
+		char *lpProgramString;
+		PPAGE_CONTROL_LIST pPages;
+	};
+	unsigned int tickDelay;
 
-typedef struct BefungeControl {
-	PBEFUNGE_METADATA meta;
-	PFUNCTION_LIST functions;
-	PINSTANCE_LIST firstInstance;
-	int nInstances;
-	char* originalProgramString;
-} BEFUNGE_CONTROL, *PBEFUNGE_CONTROL;
+	FILE * pOutFile;
+	bool isVisualiseModeActive;
+	bool isSingleSteModeActive;
+
+	PBEFUNGE_METADATA pMetadata;
+} BEFUNGE_PROGRAM_CONFIG, *PBEFUNGE_PROGRAM_CONFIG;
+
+typedef struct BefungeCoreControl {
+	PBEFUNGE_PROGRAM_CONFIG pConfig;
+	PSTATIC_CONTROL_SETTINGS pStaticSettings;
+	PDYNAMIC_CONTROL_SETTINGS pDynamicSettings;
+	PFUNGE_PAGE_MANAGER pManager;
+	BEFUNGE_MODE mode;
+	PFUNGE_OUTPUT_STATE pOutputState;
+	bool hasTerminated;
+} BEFUNGE_CORE_CONTROL, *PBEFUNGE_CORE_CONTROL;
+
 
 /*
 	POPULATION METHODS
@@ -102,55 +122,55 @@ void RunPopulation();
 */
 void InitialiseStaticControlSettings(PSTATIC_CONTROL_SETTINGS *settings, bool showState, bool singleStep, int tickDelay);
 void InitialiseDynamicControlSettings(PDYNAMIC_CONTROL_SETTINGS *settings);
-void InitialiseInstructionPointerState(PINSTRUCTION_POINTER_STATE *ipState, POSITION entrypoint);
+void InitialiseInstructionPointerState(PINSTRUCTION_POINTER_STATE *ipState, GRID_POINT *entrypoint);
 void InitialiseRegisters(REGISTERS registers);
 void InitialiseFungeStack(PFUNGE_STACK_STATE *stackStruct);
-void InitialiseControlSystem(PBEFUNGE_CONTROL control, char* programString, PFUNCTION_LIST functions, int tickDelay, FILE* outputFile, bool showState, PBEFUNGE_METADATA metadata, bool singleStep);
-void InitialiseInstanceList(PINSTANCE_LIST *list);
-void CreateInstance(PINSTANCE_LIST list);
+void InitialiseOutputState(PFUNGE_OUTPUT_STATE *outputState);
+void InitialiseCoreControl(PBEFUNGE_CORE_CONTROL pControl, PBEFUNGE_PROGRAM_CONFIG pConfig);
+void InitialisePageManager(PFUNGE_PAGE_MANAGER *pPageManager, PPAGE_CONTROL_LIST pPageList, PBEFUNGE_PROGRAM_CONFIG pConfig);
+
 
 /*
 	VISUALISATION METHODS
 */
-void OutputString(PFUNGE_INSTANCE instance, char* str, int len);
-void OutputRegistersState(PFUNGE_INSTANCE instance);
-void PrintOutputState(PFUNGE_INSTANCE instance);
-void PrintProgramState(PFUNGE_INSTANCE instance);
-void PrintStackState(PFUNGE_INSTANCE instance);
+void OutputString(PBEFUNGE_CORE_CONTROL pcontrol, char* str, int len);
+void OutputRegistersState(PBEFUNGE_CORE_CONTROL pcontrol);
+void PrintOutputState(PBEFUNGE_CORE_CONTROL pcontrol);
+void PrintProgramState(PBEFUNGE_CORE_CONTROL pcontrol);
+void PrintStackState(PBEFUNGE_CORE_CONTROL pcontrol);
 
 
 /*
 	PRIMITIVE METHODS
 */
-char GetCommand(PFUNGE_INSTANCE instance);
-void Push(PFUNGE_INSTANCE instance, STACK_ITEM_TYPE value);
-void Pop(PFUNGE_INSTANCE instance, STACK_ITEM_TYPE* out);
-void SetDirection(PFUNGE_INSTANCE instance, int direction);
-void Put(PFUNGE_INSTANCE instance);
-void Get(PFUNGE_INSTANCE instance);
+char GetCommand(PBEFUNGE_CORE_CONTROL pControl);
+void Push(PBEFUNGE_CORE_CONTROL pControl, STACK_ITEM_TYPE value);
+void Pop(PBEFUNGE_CORE_CONTROL pControl, STACK_ITEM_TYPE* out);
+void SetDirection(PBEFUNGE_CORE_CONTROL pControl, int direction);
+void Put(PBEFUNGE_CORE_CONTROL pControl);
+void Get(PBEFUNGE_CORE_CONTROL pControl);
 
 
 /*
 	SETTING CHANGE METHODS
 */
-void ToggleStringMode(PFUNGE_INSTANCE instance);
-void FlipDirection(PFUNGE_INSTANCE instance);
-void SetProgramInput(PFUNGE_INSTANCE instance, FILE* hInput);
-void SetProgramOutput(PFUNGE_INSTANCE instance, FILE* hOutput);
-void ResetProgramInput(PFUNGE_INSTANCE instance);
-void ResetProgramOutput(PFUNGE_INSTANCE instance);
+void ToggleStringMode(PBEFUNGE_CORE_CONTROL pControl);
+void FlipDirection(PBEFUNGE_CORE_CONTROL pControl);
+void SetProgramInput(PBEFUNGE_CORE_CONTROL pControl, FILE* hInput);
+void SetProgramOutput(PBEFUNGE_CORE_CONTROL pControl, FILE* hOutput);
+void ResetProgramInput(PBEFUNGE_CORE_CONTROL pControl);
+void ResetProgramOutput(PBEFUNGE_CORE_CONTROL pControl);
+
 
 /*
 	CONTROL METHODS
 */
-void LoadProgramString(PFUNGE_INSTANCE instance, char* programString);
-void TakeStep(PFUNGE_INSTANCE instance);
-void BackStep(PFUNGE_INSTANCE instance);
-int ProcessTick(PFUNGE_INSTANCE instance);
-bool AcceptCommand(PFUNGE_INSTANCE instance, char commandChar);
+void LoadProgramString(PBEFUNGE_CORE_CONTROL pControl, char* programString);
+void TakeStep(PBEFUNGE_CORE_CONTROL pControl);
+void BackStep(PBEFUNGE_CORE_CONTROL pControl);
+int ProcessTick(PBEFUNGE_CORE_CONTROL pControl);
+bool AcceptCommand(PBEFUNGE_CORE_CONTROL pControl, char commandChar);
 
-bool HasActiveInstances(PBEFUNGE_CONTROL control);
-void RegisterInstanceTermination(PFUNGE_INSTANCE pInstance);
 
 /*
 	MISC METHODS

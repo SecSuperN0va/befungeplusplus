@@ -10,11 +10,7 @@ void InitialiseProgramMetadataDefaults(PBEFUNGE_METADATA *metadata) {
 	meta->context.entrypoint.row = DEFAULT_ENTRYPOINT_ROW;
 	meta->context.entrypoint.column = DEFAULT_ENTRYPOINT_COLUMN;
 
-	meta->dimensions.rows = DEFAULT_DIMENSIONS_ROWS;
-	meta->dimensions.columns = DEFAULT_DIMENSIONS_COLUMNS;
-
-	meta->context.threadCount = DEFAULT_THREAD_COUNT;
-	meta->context.threadHeadStart = DEFAULT_THREAD_HEADSTART;
+	meta->context.initialPageId = DEFAULT_INITIAL_PAGE_ID;
 
 	*metadata = meta;
 	return;
@@ -31,24 +27,15 @@ PBEFUNGE_METADATA LoadProgramMetadata(FILE *fp) {
 		if ((config = ReadConfigSectionOfFile(fp)) != NULL) {
 			// Program contains metadata
 			do {
-				if (!strcmp("dimensions.rows", config->key)) {
-					meta->dimensions.rows = atoi(config->value);
-				}
-				if (!strcmp("dimensions.columns", config->key)) {
-					meta->dimensions.columns = atoi(config->value);
-				}
 				if (!strcmp("context.entrypoint.row", config->key)) {
 					meta->context.entrypoint.row = atoi(config->value);
 				}
 				if (!strcmp("context.entrypoint.column", config->key)) {
 					meta->context.entrypoint.column = atoi(config->value);
 				}
-				if (!strcmp("context.threadCount", config->key)) {
-					meta->context.threadCount = atoi(config->value);
-				}
-				if (!strcmp("context.threadHeadStart", config->key)) {
-					meta->context.threadHeadStart = atoi(config->value);
-				}
+				if (!strcmp("context.initialPageId", config->key)) {
+					meta->context.initialPageId = atoi(config->value);
+				}	
 
 				config = config->prev;
 			} while (config != NULL);

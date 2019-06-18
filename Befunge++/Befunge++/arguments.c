@@ -3,12 +3,15 @@
 #include <stdlib.h>
 
 void InitialiseArgumentStruct(PARGUMENTS args) {
+	//if (args != NULL && args->args != NULL) free(args->args);
 	args->args = (char**)calloc(N_AVAILABLE_ARGS, sizeof(char*));
 	return;
 }
 
 bool ProcessArguments(PARGUMENTS args, int argc, char** argv) {
 	int counter = 0;
+
+	InitialiseArgumentStruct(args);
 
 	for (counter = 1; counter < argc; counter += 2) {
 		// Check for '-' at start of switch

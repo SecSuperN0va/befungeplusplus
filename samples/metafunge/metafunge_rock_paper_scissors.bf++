@@ -1,13 +1,19 @@
 [META]
-dimensions.rows = 25
-dimensions.columns = 72
+dimensions.rows = 35
+dimensions.columns = 50
+context.entrypoint.page = 0
 context.entrypoint.row = 0
 context.entrypoint.column = 0
-context.threadCount = 1
-context.threadHeadStart = 2
+context.initialPageId = 0
+
+[PAGE]
+page.id = 0
+page.dimensions.rows = 18
+page.dimensions.columns = 72
+page.name = "RPS"
 
 v                       >  v
->a"3 no"4k,1.0"1 peels"#^=$>2.0"1 peels"#v=$v
+> "3 no"4k,1.0"1 peels"#^=$>2.0"1 peels"#v=$v
           v                              <  <
 v,k3"rock"?"srossics"7k,v
           "

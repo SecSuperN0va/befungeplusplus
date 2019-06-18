@@ -43,39 +43,39 @@
 #define FLAG_FILE_MODE_WRITE 1
 
 
-bool CmdNop(PFUNGE_INSTANCE instance);
-bool CmdAdd(PFUNGE_INSTANCE instance);
-bool CmdSubtract(PFUNGE_INSTANCE instance);
-bool CmdMultiply(PFUNGE_INSTANCE instance);
-bool CmdDivide(PFUNGE_INSTANCE instance);
-bool CmdModulo(PFUNGE_INSTANCE instance);
-bool CmdNot(PFUNGE_INSTANCE instance);
-bool CmdGreaterThan(PFUNGE_INSTANCE instance);
-bool CmdMoveRight(PFUNGE_INSTANCE instance);
-bool CmdMoveLeft(PFUNGE_INSTANCE instance);
-bool CmdMoveUp(PFUNGE_INSTANCE instance);
-bool CmdMoveDown(PFUNGE_INSTANCE instance);
-bool CmdMoveRand(PFUNGE_INSTANCE instance);
-bool CmdHorizontalNullCheck(PFUNGE_INSTANCE instance);
-bool CmdVerticalNullCheck(PFUNGE_INSTANCE instance);
-bool CmdStringMode(PFUNGE_INSTANCE instance);
-bool CmdDuplicate(PFUNGE_INSTANCE instance);
-bool CmdSwap(PFUNGE_INSTANCE instance);
-bool CmdDiscard(PFUNGE_INSTANCE instance);
-bool CmdIntegerOut(PFUNGE_INSTANCE instance);
-bool CmdASCIIOut(PFUNGE_INSTANCE instance);
-bool CmdBridge(PFUNGE_INSTANCE instance);
-bool CmdPut(PFUNGE_INSTANCE instance);
-bool CmdGet(PFUNGE_INSTANCE instance);
-bool CmdIntegerIn(PFUNGE_INSTANCE instance);
-bool CmdASCIIIn(PFUNGE_INSTANCE instance);
-bool CmdTerminate(PFUNGE_INSTANCE instance);
-bool CmdLoadReg(PFUNGE_INSTANCE instance);
-bool CmdGetReg(PFUNGE_INSTANCE instance);
-bool CmdSyscall(PFUNGE_INSTANCE instance);
-bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance);
-bool CmdFork(PFUNGE_INSTANCE instance);
-bool CmdCall(PFUNGE_INSTANCE instance);
+bool CmdNop(PBEFUNGE_CORE_CONTROL instance);
+bool CmdAdd(PBEFUNGE_CORE_CONTROL instance);
+bool CmdSubtract(PBEFUNGE_CORE_CONTROL instance);
+bool CmdMultiply(PBEFUNGE_CORE_CONTROL instance);
+bool CmdDivide(PBEFUNGE_CORE_CONTROL instance);
+bool CmdModulo(PBEFUNGE_CORE_CONTROL instance);
+bool CmdNot(PBEFUNGE_CORE_CONTROL instance);
+bool CmdGreaterThan(PBEFUNGE_CORE_CONTROL instance);
+bool CmdMoveRight(PBEFUNGE_CORE_CONTROL instance);
+bool CmdMoveLeft(PBEFUNGE_CORE_CONTROL instance);
+bool CmdMoveUp(PBEFUNGE_CORE_CONTROL instance);
+bool CmdMoveDown(PBEFUNGE_CORE_CONTROL instance);
+bool CmdMoveRand(PBEFUNGE_CORE_CONTROL instance);
+bool CmdHorizontalNullCheck(PBEFUNGE_CORE_CONTROL instance);
+bool CmdVerticalNullCheck(PBEFUNGE_CORE_CONTROL instance);
+bool CmdStringMode(PBEFUNGE_CORE_CONTROL instance);
+bool CmdDuplicate(PBEFUNGE_CORE_CONTROL instance);
+bool CmdSwap(PBEFUNGE_CORE_CONTROL instance);
+bool CmdDiscard(PBEFUNGE_CORE_CONTROL instance);
+bool CmdIntegerOut(PBEFUNGE_CORE_CONTROL instance);
+bool CmdASCIIOut(PBEFUNGE_CORE_CONTROL instance);
+bool CmdBridge(PBEFUNGE_CORE_CONTROL instance);
+bool CmdPut(PBEFUNGE_CORE_CONTROL instance);
+bool CmdGet(PBEFUNGE_CORE_CONTROL instance);
+bool CmdIntegerIn(PBEFUNGE_CORE_CONTROL instance);
+bool CmdASCIIIn(PBEFUNGE_CORE_CONTROL instance);
+bool CmdTerminate(PBEFUNGE_CORE_CONTROL instance);
+bool CmdLoadReg(PBEFUNGE_CORE_CONTROL instance);
+bool CmdGetReg(PBEFUNGE_CORE_CONTROL instance);
+bool CmdSyscall(PBEFUNGE_CORE_CONTROL instance);
+bool CmdOperatingSystemInteraction(PBEFUNGE_CORE_CONTROL instance);
+bool CmdFork(PBEFUNGE_CORE_CONTROL instance);
+bool CmdCall(PBEFUNGE_CORE_CONTROL instance);
 
 #define ORD_NOP 0
 #define ORD_ADD 1
@@ -157,6 +157,6 @@ void PopulateCommandCharLookup();
 #define FUNC_CALL CmdCall
 
 
-bool(*commandTable[])(PFUNGE_INSTANCE);
+bool(*commandTable[])(PBEFUNGE_CORE_CONTROL);
 
 void PopulateCommandTable();

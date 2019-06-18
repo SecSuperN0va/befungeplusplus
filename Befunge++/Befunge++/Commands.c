@@ -4,13 +4,12 @@
 #include <stdlib.h>
 #include "Syscalls.h"
 #include "befunge_error.h"
-#include "functions.h"
 
-# define POP(dest) Pop(instance, dest) 
-# define PUSH(src) Push(instance, src)
-# define STEP() TakeStep(instance)
-# define BACKSTEP() BackStep(instance)
-# define SETDIRECTION(dir) SetDirection(instance, dir)
+# define POP(dest) Pop(pControl, dest) 
+# define PUSH(src) Push(pControl, src)
+# define STEP() TakeStep(pControl)
+# define BACKSTEP() BackStep(pControl)
+# define SETDIRECTION(dir) SetDirection(pControl, dir)
 
 int commandCharLookup[MAX_ORD] = { CMD_NOP };
 bool(*commandTable[MAX_ORD])(PBEFUNGE_instance) = { FUNC_NOP };
@@ -49,7 +48,7 @@ void PopulateCommandCharLookup() {
 	commandCharLookup[ORD_GET_REG] = CMD_GET_REG;
 	commandCharLookup[ORD_SYSCALL] = CMD_SYSCALL;
 	commandCharLookup[ORD_OSI] = CMD_OSI;
-	commandCharLookup[ORD_FORK] = CMD_FORK;
+	//commandCharLookup[ORD_FORK] = CMD_FORK;
 	commandCharLookup[ORD_CALL] = CMD_CALL;
 }
 
@@ -86,20 +85,20 @@ void PopulateCommandTable() {
 	commandTable[ORD_GET_REG] = FUNC_GET_REG;
 	commandTable[ORD_SYSCALL] = FUNC_SYSCALL;
 	commandTable[ORD_OSI] = FUNC_OSI;
-	commandTable[ORD_FORK] = FUNC_FORK;
+	//commandTable[ORD_FORK] = FUNC_FORK;
 	commandTable[ORD_CALL] = FUNC_CALL;
 }
 
-bool CmdNop(PFUNGE_INSTANCE instance) {
+bool CmdNop(PBEFUNGE_CORE_CONTROL pControl) {
 	STEP();
-	while (GetCommand(instance) == CMD_NOP) {
+	while (GetCommand(pControl) == CMD_NOP) {
 		STEP();
 	}
 	BACKSTEP();
 	return true;
 }
 
-bool CmdAdd(PFUNGE_INSTANCE instance) {
+bool CmdAdd(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a, b;
 	POP(&a);
 	POP(&b);
@@ -107,7 +106,7 @@ bool CmdAdd(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdSubtract(PFUNGE_INSTANCE instance) {
+bool CmdSubtract(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a, b;
 	POP(&a);
 	POP(&b);
@@ -115,7 +114,7 @@ bool CmdSubtract(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdMultiply(PFUNGE_INSTANCE instance) {
+bool CmdMultiply(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a, b;
 	POP(&a);
 	POP(&b);
@@ -123,7 +122,7 @@ bool CmdMultiply(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdDivide(PFUNGE_INSTANCE instance) {
+bool CmdDivide(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a, b;
 	POP(&a);
 	POP(&b);
@@ -131,7 +130,7 @@ bool CmdDivide(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdModulo(PFUNGE_INSTANCE instance) {
+bool CmdModulo(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a, b;
 	POP(&a);
 	POP(&b);
@@ -139,7 +138,7 @@ bool CmdModulo(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdNot(PFUNGE_INSTANCE instance) {
+bool CmdNot(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a;
 	POP(&a);
 	if (a == 0) {
@@ -151,7 +150,7 @@ bool CmdNot(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdGreaterThan(PFUNGE_INSTANCE instance) {
+bool CmdGreaterThan(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a, b;
 	POP(&a);
 	POP(&b);
@@ -165,27 +164,27 @@ bool CmdGreaterThan(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdMoveRight(PFUNGE_INSTANCE instance) {
+bool CmdMoveRight(PBEFUNGE_CORE_CONTROL pControl) {
 	SETDIRECTION(DIR_RIGHT);
 	return true;
 }
 
-bool CmdMoveLeft(PFUNGE_INSTANCE instance) {
+bool CmdMoveLeft(PBEFUNGE_CORE_CONTROL pControl) {
 	SETDIRECTION(DIR_LEFT);
 	return true;
 }
 
-bool CmdMoveUp(PFUNGE_INSTANCE instance) {
+bool CmdMoveUp(PBEFUNGE_CORE_CONTROL pControl) {
 	SETDIRECTION(DIR_UP);
 	return true;
 }
 
-bool CmdMoveDown(PFUNGE_INSTANCE instance) {
+bool CmdMoveDown(PBEFUNGE_CORE_CONTROL pControl) {
 	SETDIRECTION(DIR_DOWN);
 	return true;
 }
 
-bool CmdMoveRand(PFUNGE_INSTANCE instance) {
+bool CmdMoveRand(PBEFUNGE_CORE_CONTROL pControl) {
 	int a;
 	srand((unsigned)time(0));
 	a = rand() % 4;	// random number between 0 and the number of directions available (4)
@@ -193,7 +192,7 @@ bool CmdMoveRand(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdHorizontalNullCheck(PFUNGE_INSTANCE instance) {
+bool CmdHorizontalNullCheck(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a;
 	POP(&a);
 	if (a == 0) {
@@ -205,7 +204,7 @@ bool CmdHorizontalNullCheck(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdVerticalNullCheck(PFUNGE_INSTANCE instance) {
+bool CmdVerticalNullCheck(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a;
 	POP(&a);
 	if (a == 0) {
@@ -217,12 +216,12 @@ bool CmdVerticalNullCheck(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdStringMode(PFUNGE_INSTANCE instance) {
-	ToggleStringMode(instance);
+bool CmdStringMode(PBEFUNGE_CORE_CONTROL pControl) {
+	ToggleStringMode(pControl);
 	return true;
 }
 
-bool CmdDuplicate(PFUNGE_INSTANCE instance) {
+bool CmdDuplicate(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a;
 	POP(&a);
 	PUSH(a);
@@ -230,7 +229,7 @@ bool CmdDuplicate(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdSwap(PFUNGE_INSTANCE instance) {
+bool CmdSwap(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a, b;
 	POP(&a);
 	POP(&b);
@@ -239,108 +238,112 @@ bool CmdSwap(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdDiscard(PFUNGE_INSTANCE instance) {
+bool CmdDiscard(PBEFUNGE_CORE_CONTROL pControl) {
 	POP(NULL);
 	return true;
 }
 
-bool CmdIntegerOut(PFUNGE_INSTANCE instance) {
+bool CmdIntegerOut(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a;
 	char tempBuffer[20];
 	POP(&a);
 	snprintf(tempBuffer, sizeof(tempBuffer), "%d ", (unsigned int)a);
-	OutputString(instance, tempBuffer, strlen(tempBuffer));
+	OutputString(pControl, tempBuffer, strlen(tempBuffer));
 	return true;
 }
 
-bool CmdASCIIOut(PFUNGE_INSTANCE instance) {
+bool CmdASCIIOut(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a;
 	char tempBuffer[20];
 	POP(&a);
 	snprintf(tempBuffer, sizeof(tempBuffer), "%c", a);
-	OutputString(instance, tempBuffer, 1);
+	OutputString(pControl, tempBuffer, 1);
 	return true;
 }
 
-bool CmdBridge(PFUNGE_INSTANCE instance) {
+bool CmdBridge(PBEFUNGE_CORE_CONTROL pControl) {
 	STEP();
 	return true;
 }
 
-bool CmdPut(PFUNGE_INSTANCE instance) {
-	Put(instance);
+bool CmdPut(PBEFUNGE_CORE_CONTROL pControl) {
+	Put(pControl);
 	return true;
 }
 
-bool CmdGet(PFUNGE_INSTANCE instance) {
-	Get(instance);
+bool CmdGet(PBEFUNGE_CORE_CONTROL pControl) {
+	Get(pControl);
 	return true;
 }
 
-bool CmdIntegerIn(PFUNGE_INSTANCE instance) {
+bool CmdIntegerIn(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a;
-	a = fgetc(instance->dynamicSettings->hProgramIn);
+	a = fgetc(pControl->pDynamicSettings->hProgramIn);
 	// Flush newline character
-	if (instance->dynamicSettings->hProgramIn == stdin)
-		fgetc(instance->dynamicSettings->hProgramIn);
+	if (pControl->pDynamicSettings->hProgramIn == stdin)
+		fgetc(pControl->pDynamicSettings->hProgramIn);
 	while (a < 0x30 || a > 0x39) {
 		fprintf(stderr, "Invalid Number! Please enter a single digit number: ");
-		a = fgetc(instance->dynamicSettings->hProgramIn);
+		a = fgetc(pControl->pDynamicSettings->hProgramIn);
 		// Flush newline character
-		if (instance->dynamicSettings->hProgramIn == stdin)
-			fgetc(instance->dynamicSettings->hProgramIn);
+		if (pControl->pDynamicSettings->hProgramIn == stdin)
+			fgetc(pControl->pDynamicSettings->hProgramIn);
 	}
 	PUSH(a - 0x30);
 	return true;
 }
 
-bool CmdASCIIIn(PFUNGE_INSTANCE instance) {
+bool CmdASCIIIn(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE a;
-	a = fgetc(instance->dynamicSettings->hProgramIn);
+	a = fgetc(pControl->pDynamicSettings->hProgramIn);
 	// Flush newline character
-	if (instance->dynamicSettings->hProgramIn == stdin)
-		fgetc(instance->dynamicSettings->hProgramIn);
+	if (pControl->pDynamicSettings->hProgramIn == stdin)
+		fgetc(pControl->pDynamicSettings->hProgramIn);
 	while (a < 0x20 || a > 0x7F) {
 		fprintf(stderr, "Invalid Character! Please enter an ASCII character: ");
-		a = fgetc(instance->dynamicSettings->hProgramIn);
+		a = fgetc(pControl->pDynamicSettings->hProgramIn);
 		// Flush newline character
-		if (instance->dynamicSettings->hProgramIn == stdin)
-			fgetc(instance->dynamicSettings->hProgramIn);
+		if (pControl->pDynamicSettings->hProgramIn == stdin)
+			fgetc(pControl->pDynamicSettings->hProgramIn);
 	}
 	PUSH(a);
 	return true;
 }
 
-bool CmdTerminate(PFUNGE_INSTANCE instance) {
+bool CmdTerminate(PBEFUNGE_CORE_CONTROL pControl) {
 	bool status = false;
 
-	if (instance->dynamicSettings->depth != 0) {
-		STACK_ITEM_TYPE row, column, direction;
+	if (pControl->pDynamicSettings->depth != 0) {
+		STACK_ITEM_TYPE page, row, column, direction;
+		POP(&page);
 		POP(&row);
 		POP(&column);
 		POP(&direction);
 
-		instance->ipState->position[AXIS_X] = column;
-		instance->ipState->position[AXIS_Y] = row;
-		instance->ipState->direction = direction;
+		pControl->pManager->pIpState->position.column = column;
+		pControl->pManager->pIpState->position.row = row;
+		pControl->pManager->pIpState->direction = direction;
 
-		instance->dynamicSettings->depth--;
+		pControl->pManager->pCurrentPageControl = PageControlListGetPageById(pControl->pManager->pPageControlList, page);
+
+		pControl->pDynamicSettings->depth--;
 		status = false;
 	}
 	else {
-		RegisterInstanceTermination(instance);
+		//RegisterInstanceTermination(pControl);
+		pControl->hasTerminated = true;
 		status = true;
 	}
 	return status;
 }
 
-bool CmdLoadReg(PFUNGE_INSTANCE instance) {
+bool CmdLoadReg(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE registerId, value;
 	POP(&registerId);
 	POP(&value);
 
 	if (registerId < REGISTER_COUNT) {
-		instance->registers[registerId] = value;
+		pControl->pManager->registers[registerId] = value;
 	}
 	else {
 		fprintf(stderr, "Invalid register ID: %d\n", registerId);
@@ -349,12 +352,12 @@ bool CmdLoadReg(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdGetReg(PFUNGE_INSTANCE instance) {
+bool CmdGetReg(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE registerId, value;
 	POP(&registerId);
 	
 	if (registerId < REGISTER_COUNT) {
-		value = instance->registers[registerId];
+		value = pControl->pManager->registers[registerId];
 		PUSH(value);
 	}
 	else {
@@ -365,12 +368,12 @@ bool CmdGetReg(PFUNGE_INSTANCE instance) {
 	return true;
 }
 
-bool CmdSyscall(PFUNGE_INSTANCE instance) {
+bool CmdSyscall(PBEFUNGE_CORE_CONTROL pControl) {
 	
 	return true;
 }
 
-bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance) {
+bool CmdOperatingSystemInteraction(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE OsiId;
 	STACK_ITEM_TYPE a;
 	char c = '\0';
@@ -400,7 +403,7 @@ bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance) {
 		case FLAG_FILE_MODE_READ:
 			p = fopen(filePathBuffer, "r");
 			if (p != NULL) {
-				SetProgramInput(instance, p);
+				SetProgramInput(pControl, p);
 			}
 			else {
 				ERROR_MESSAGE("Could not open file for reading");
@@ -410,7 +413,7 @@ bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance) {
 		case FLAG_FILE_MODE_WRITE:
 			p = fopen(filePathBuffer, "w");
 			if (p != NULL) {
-				SetProgramOutput(instance, p);
+				SetProgramOutput(pControl, p);
 			}
 			else {
 				ERROR_MESSAGE("Could not open file for writing");
@@ -425,10 +428,10 @@ bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance) {
 		fileMode = (int)a;
 		switch (fileMode) {
 		case FLAG_FILE_MODE_READ:
-			ResetProgramInput(instance);
+			ResetProgramInput(pControl);
 			break;
 		case FLAG_FILE_MODE_WRITE:
-			ResetProgramOutput(instance);
+			ResetProgramOutput(pControl);
 			break;
 		default:
 			ERROR_MESSAGE("Invalid mode value for OSI_FILE_CLOSE");
@@ -437,123 +440,124 @@ bool CmdOperatingSystemInteraction(PFUNGE_INSTANCE instance) {
 		break;
 	default:
 	ERROR_CASE:
-		OutputString(instance, "Can not process OSI ID", 22);
+		OutputString(pControl, "Can not process OSI ID", 22);
 		return false;
 	}
 	return true;
 }
+//
+//bool CmdFork(PBEFUNGE_CORE_CONTROL pControl) {
+//	PFUNCTION_LIST functionEntry = NULL;
+//	PFUNCTION_DEFINITION functionDefinition = NULL;
+//	bool status = false;
+//
+//	CreateInstance(((PBEFUNGE_CONTROL)pControl->parent)->firstInstance);
+//	PINSTANCE_LIST entry = ((PBEFUNGE_CONTROL)pControl->parent)->firstInstance;
+//	while (entry->next != NULL) {
+//		entry = entry->next;
+//	}
+//
+//	// Pop the function identifier
+//	STACK_ITEM_TYPE functionId = 0;
+//	POP(&functionId);
+//	fprintf(stderr, "Starting function %d\n", functionId);
+//
+//	// Identify the matching function by functionId
+//	functionEntry = ((PBEFUNGE_CONTROL)pControl->parent)->functions;
+//	functionEntry = functionEntry->next;
+//	while (functionEntry != NULL) {
+//		if (((PFUNCTION_DEFINITION)functionEntry->pFunction)->id == functionId) {
+//			fprintf(stderr, "Found function definition for id: %d\n", functionId);
+//			functionDefinition = functionEntry->pFunction;
+//			break;
+//		}
+//		functionEntry = functionEntry->next;
+//	}
+//
+//	if (functionDefinition != NULL) {
+//		if ((functionDefinition->entrypoint.row < pControl->gridStruct->rows)
+//			&& (functionDefinition->entrypoint.column < pControl->gridStruct->columns)){
+//
+//			// Pop the FAF/WFR indicator
+//			STACK_ITEM_TYPE fafwfrIndicator = 0;
+//			POP(&fafwfrIndicator);
+//
+//			if (fafwfrIndicator) {
+//				fprintf(stderr, "Starting function with WFR mechanism\n");
+//			}
+//			else {
+//				fprintf(stderr, "Starting function with FAF mechanism\n");
+//			}
+//
+//			POSITION entrypoint;
+//			entrypoint[AXIS_X] = functionDefinition->entrypoint.column;
+//			entrypoint[AXIS_Y] = functionDefinition->entrypoint.row;
+//
+//			GRID_DIMENSIONS dims;
+//			dims.columns = ((PBEFUNGE_CONTROL)pControl->parent)->meta->dimensions.columns;
+//			dims.rows = ((PBEFUNGE_CONTROL)pControl->parent)->meta->dimensions.rows;
+//			InitialiseFungeInstance(entry->pInstance, (void*)pControl->parent, NULL, 0, NULL, pControl->staticSettings->showState, pControl->staticSettings->singleStepMode, entrypoint, dims);
+//
+//			// Pop the necessary values from caller stack and push onto callee stack.
+//
+//			STACK_ITEM_TYPE val = 0;
+//			int arg_count = functionDefinition->argumentCount;
+//
+//			STACK_ITEM_TYPE tmpArgs[100] = { 0 };
+//			if (arg_count == -1) {
+//				arg_count = 1;
+//				// Pop string into new instance stack
+//				while (POP(&val), val != 0) {
+//					tmpArgs[arg_count++] = val;
+//				}
+//
+//				Push(entry->pInstance, 0);
+//
+//				for (; arg_count != 0; arg_count--) {
+//					Push(entry->pInstance, tmpArgs[arg_count]);
+//				}
+//			}
+//			else {
+//				for (; arg_count != 0; arg_count--) {
+//					POP(&val);
+//					Push(entry->pInstance, val);
+//				}
+//			}
+//
+//			// SUCCESS!
+//			status = true;
+//		}
+//		else {
+//			ERROR_MESSAGE("Function definition entrypoint out of bounds!");
+//			status = false;
+//		}
+//	}
+//	else {
+//		ERROR_MESSAGE("Could not find function with specified ID.");
+//		status = false;
+//	}
+//	return status;
+//}
 
-bool CmdFork(PFUNGE_INSTANCE instance) {
-	PFUNCTION_LIST functionEntry = NULL;
-	PFUNCTION_DEFINITION functionDefinition = NULL;
-	bool status = false;
-
-	CreateInstance(((PBEFUNGE_CONTROL)instance->parent)->firstInstance);
-	PINSTANCE_LIST entry = ((PBEFUNGE_CONTROL)instance->parent)->firstInstance;
-	while (entry->next != NULL) {
-		entry = entry->next;
-	}
-
-	// Pop the function identifier
-	STACK_ITEM_TYPE functionId = 0;
-	POP(&functionId);
-	fprintf(stderr, "Starting function %d\n", functionId);
-
-	// Identify the matching function by functionId
-	functionEntry = ((PBEFUNGE_CONTROL)instance->parent)->functions;
-	functionEntry = functionEntry->next;
-	while (functionEntry != NULL) {
-		if (((PFUNCTION_DEFINITION)functionEntry->pFunction)->id == functionId) {
-			fprintf(stderr, "Found function definition for id: %d\n", functionId);
-			functionDefinition = functionEntry->pFunction;
-			break;
-		}
-		functionEntry = functionEntry->next;
-	}
-
-	if (functionDefinition != NULL) {
-		if ((functionDefinition->entrypoint.row < instance->gridStruct->rows)
-			&& (functionDefinition->entrypoint.column < instance->gridStruct->columns)){
-
-			// Pop the FAF/WFR indicator
-			STACK_ITEM_TYPE fafwfrIndicator = 0;
-			POP(&fafwfrIndicator);
-
-			if (fafwfrIndicator) {
-				fprintf(stderr, "Starting function with WFR mechanism\n");
-			}
-			else {
-				fprintf(stderr, "Starting function with FAF mechanism\n");
-			}
-
-			POSITION entrypoint;
-			entrypoint[AXIS_X] = functionDefinition->entrypoint.column;
-			entrypoint[AXIS_Y] = functionDefinition->entrypoint.row;
-
-			GRID_DIMENSIONS dims;
-			dims.columns = ((PBEFUNGE_CONTROL)instance->parent)->meta->dimensions.columns;
-			dims.rows = ((PBEFUNGE_CONTROL)instance->parent)->meta->dimensions.rows;
-			InitialiseFungeInstance(entry->pInstance, (void*)instance->parent, NULL, 0, NULL, instance->staticSettings->showState, instance->staticSettings->singleStepMode, entrypoint, dims);
-
-			// Pop the necessary values from caller stack and push onto callee stack.
-
-			STACK_ITEM_TYPE val = 0;
-			int arg_count = functionDefinition->argumentCount;
-
-			STACK_ITEM_TYPE tmpArgs[100] = { 0 };
-			if (arg_count == -1) {
-				arg_count = 1;
-				// Pop string into new instance stack
-				while (POP(&val), val != 0) {
-					tmpArgs[arg_count++] = val;
-				}
-
-				Push(entry->pInstance, 0);
-
-				for (; arg_count != 0; arg_count--) {
-					Push(entry->pInstance, tmpArgs[arg_count]);
-				}
-			}
-			else {
-				for (; arg_count != 0; arg_count--) {
-					POP(&val);
-					Push(entry->pInstance, val);
-				}
-			}
-
-			// SUCCESS!
-			status = true;
-		}
-		else {
-			ERROR_MESSAGE("Function definition entrypoint out of bounds!");
-			status = false;
-		}
-	}
-	else {
-		ERROR_MESSAGE("Could not find function with specified ID.");
-		status = false;
-	}
-	return status;
-}
-
-bool CmdCall(PFUNGE_INSTANCE instance) {
+bool CmdCall(PBEFUNGE_CORE_CONTROL pControl) {
 	bool status = true;
-	STACK_ITEM_TYPE column, row, arg_count, val;
+	STACK_ITEM_TYPE page, column, row, arg_count, val;
 	STACK_ITEM_TYPE origA, origB;
 	int count = 0;
-	int next_row, next_col = 0;
+	int next_row = 0, next_col = 0, calling_page = 0;
 
+	POP(&page);
 	POP(&column);
 	POP(&row);
 	POP(&arg_count);
 
 	// fprintf(stderr, "Row: %d, Column: %d, ArgCount: %d\n", row, column, arg_count);
 
-	origA = instance->registers[REG_A];
-	origB = instance->registers[REG_B];
+	origA = pControl->pManager->registers[REG_A];
+	origB = pControl->pManager->registers[REG_B];
 
-	instance->registers[REG_A] = column;
-	instance->registers[REG_B] = row;
+	pControl->pManager->registers[REG_A] = column;
+	pControl->pManager->registers[REG_B] = row;
 
 	STACK_ITEM_TYPE * tmpArgs = NULL;
 	
@@ -578,13 +582,15 @@ bool CmdCall(PFUNGE_INSTANCE instance) {
 
 	// Push the return co-ordinates to the stack
 	// STEP();
-	next_col = instance->ipState->position[AXIS_X];
-	next_row = instance->ipState->position[AXIS_Y];
+	next_col = pControl->pManager->pIpState->position.column;
+	next_row = pControl->pManager->pIpState->position.row;
+	calling_page = pControl->pManager->pCurrentPageControl->id;
 	// BACKSTEP();
 
-	PUSH(instance->ipState->direction);
+	PUSH(pControl->pManager->pIpState->direction);
 	PUSH(next_col);
 	PUSH(next_row);
+	PUSH(calling_page);
 
 	if (arg_count != 0) {
 		for (; count >= 0; count--) {
@@ -592,13 +598,21 @@ bool CmdCall(PFUNGE_INSTANCE instance) {
 		}
 	}
 
-	instance->ipState->position[AXIS_Y] = instance->registers[REG_B];
-	instance->ipState->position[AXIS_X] = instance->registers[REG_A];
+	PPAGE_CONTROL tmp = PageControlListGetPageById(pControl->pManager->pPageControlList, page);
+	if (tmp == NULL) {
+		ERROR_MESSAGE("Could not locate page with matching ID. Not changing pages");
+	}
+	else {
+		pControl->pManager->pCurrentPageControl = tmp;
+	}
 
-	instance->registers[REG_A] = origA;
-	instance->registers[REG_B] = origB;
+	pControl->pManager->pIpState->position.row = pControl->pManager->registers[REG_B];
+	pControl->pManager->pIpState->position.column = pControl->pManager->registers[REG_A];
 
-	instance->dynamicSettings->depth++;
+	pControl->pManager->registers[REG_A] = origA;
+	pControl->pManager->registers[REG_B] = origB;
+
+	pControl->pDynamicSettings->depth++;
 
 	return true;
 }

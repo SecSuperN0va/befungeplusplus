@@ -1,6 +1,7 @@
 #include "grid.h"
 #include "befunge_error.h"
 #include <stdlib.h>
+#include <string.h>
 
 char** createEmptyGrid(int columns, int rows) {
 	int i;
@@ -14,7 +15,6 @@ char** createEmptyGrid(int columns, int rows) {
 
 	return grid;
 }
-
 
 void freeGrid(char** grid, int rows) {
 	int i;
@@ -36,7 +36,6 @@ PBEFUNGE_GRID CreateBefungeGrid(int columns, int rows) {
 
 	return gridStruct;
 }
-
 
 void PopulateGridWithProgram(PBEFUNGE_GRID grid, char* programString) {
 	int columnCount = 0;
