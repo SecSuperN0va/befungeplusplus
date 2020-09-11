@@ -36,7 +36,6 @@
 
 #define CMD_OSI 'o'
 
-#define CMD_FORK 'F'
 #define CMD_CALL 'C'
 
 #define FLAG_FILE_MODE_READ 0
