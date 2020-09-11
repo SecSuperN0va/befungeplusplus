@@ -368,11 +368,6 @@ bool CmdGetReg(PBEFUNGE_CORE_CONTROL pControl) {
 	return true;
 }
 
-bool CmdSyscall(PBEFUNGE_CORE_CONTROL pControl) {
-	
-	return true;
-}
-
 bool CmdOperatingSystemInteraction(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE OsiId;
 	STACK_ITEM_TYPE a;
