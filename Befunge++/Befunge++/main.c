@@ -101,7 +101,7 @@ int StartPagedController(PBEFUNGE_CORE_CONTROL pControl) {
 			}
 			break;
 		default:
-			ERROR_MESSAGE("WTF??? I didn't even make any other error codes!");
+			ERROR_MESSAGE("This shouldn't happen. I didn't even make any other error codes!");
 			break;
 		}
 	}
