@@ -84,7 +84,6 @@ void PopulateCommandTable() {
 	commandTable[ORD_LOAD_REG] = FUNC_LOAD_REG;
 	commandTable[ORD_GET_REG] = FUNC_GET_REG;
 	commandTable[ORD_OSI] = FUNC_OSI;
-	//commandTable[ORD_FORK] = FUNC_FORK;
 	commandTable[ORD_CALL] = FUNC_CALL;
 }
 
