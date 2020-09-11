@@ -32,7 +32,6 @@
 
 #define CMD_LOAD_REG 'r' // Pop register identifier from stack, Pop value from stack, set register = value.
 #define CMD_GET_REG 'R' // Pop register identifier from stack. Push value of specified register. 
-#define CMD_SYSCALL 's' // Pop syscall number from stack, run the syscall with the relevant id.
 
 #define CMD_OSI 'o'
 
