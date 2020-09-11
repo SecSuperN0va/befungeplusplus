@@ -42,9 +42,6 @@
     <ClCompile Include="SyscallWindows.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="functions.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="page_manager.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -68,9 +65,6 @@
     <ClInclude Include="befunge_error.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inline.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Commands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -78,9 +72,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Syscalls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="page_manager.h">

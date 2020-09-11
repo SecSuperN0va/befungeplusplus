@@ -1,10 +1,16 @@
 [META]
 dimensions.rows = 2
 dimensions.columns = 16
+context.entrypoint.page = 0
 context.entrypoint.row = 0
 context.entrypoint.column = 0
-context.threadCount = 1
-context.threadHeadStart = 2
+context.initialPageId = 0
+
+[PAGE]
+page.id = 0
+page.dimensions.rows = 2
+page.dimensions.columns = 16
+page.name = "main"
 
 &>:1-:v v *_$.@
  ^    _$>\:^

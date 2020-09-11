@@ -5,7 +5,6 @@
 #include "srcutil.h"
 #include "befunge_error.h"
 #include "Commands.h"
-#include "functions.h"
 
 /*
 	POPULATION METHODS
@@ -39,14 +38,14 @@ void InitialiseDynamicControlSettings(PDYNAMIC_CONTROL_SETTINGS *settings) {
 	return;
 }
 
-void InitialiseInstructionPointerState(PINSTRUCTION_POINTER_STATE *ipState, POSITION entrypoint) {
+void InitialiseInstructionPointerState(PINSTRUCTION_POINTER_STATE *ipState, GRID_POINT *entrypoint) {
 	int i = 0;
 	*ipState = (PINSTRUCTION_POINTER_STATE)calloc(1, sizeof(INSTRUCTION_POINTER_STATE));
 	(*ipState)->direction = DIR_RIGHT;
 	
-	for (i = 0; i < N_DIMENSIONS; i++) {
-		(*ipState)->position[i] = entrypoint[i];
-	}
+	(*ipState)->position.column = entrypoint->column;
+	(*ipState)->position.row = entrypoint->row;
+
 	return;
 }
 
@@ -64,70 +63,65 @@ void InitialiseFungeStack(PFUNGE_STACK_STATE *stackStruct) {
 	return;
 }
 
-void InitialiseFungeInstance(PFUNGE_INSTANCE instance, void* parent, char* programString, int tickDelay, FILE* outputFile, bool showState, bool singleStep, POSITION entrypoint, GRID_DIMENSIONS dimensions) {
-
-	instance->parent = parent;
-
-	InitialiseStaticControlSettings(&(instance->staticSettings), showState, singleStep, tickDelay);
-	InitialiseDynamicControlSettings(&(instance->dynamicSettings));
-	InitialiseInstructionPointerState(&(instance->ipState), entrypoint);
-	InitialiseRegisters(instance->registers);
-	InitialiseFungeStack(&(instance->stackState));
-	instance->gridStruct = CreateBefungeGrid(dimensions.columns, dimensions.rows);
-	instance->outputFile = outputFile;
-
-	instance->output = (char*)calloc(DEFAULT_OUTPUT_SIZE, sizeof(char));
-	instance->outputSize = 0;
-
-	if (programString == NULL) {
-		DEBUG_MESSAGE("Loaded program string from control system");
-		LoadProgramString(instance, ((PBEFUNGE_CONTROL)instance->parent)->originalProgramString);
-	}
-	else {
-		DEBUG_MESSAGE("Loaded program string from supplied string");
-		LoadProgramString(instance, programString);
-	}
+void InitialiseOutputState(PFUNGE_OUTPUT_STATE *outputState) {
+	*outputState = (PFUNGE_OUTPUT_STATE)calloc(1, sizeof(FUNGE_OUTPUT_STATE));
+	(*outputState)->output = NULL;
+	(*outputState)->outputFile = NULL;
+	(*outputState)->outputSize = 0;
 	return;
 }
 
-void InitialiseControlSystem(PBEFUNGE_CONTROL control, char* programString, PFUNCTION_LIST functions, int tickDelay, FILE* outputFile, bool showState, PBEFUNGE_METADATA metadata, bool singleStep) {
-	POSITION entrypoint;
+void InitialisePageManager(PFUNGE_PAGE_MANAGER *pPageManager, PPAGE_CONTROL_LIST pPageList, PBEFUNGE_PROGRAM_CONFIG pConfig) {
+	*pPageManager = (PFUNGE_PAGE_MANAGER)calloc(1, sizeof(FUNGE_PAGE_MANAGER));
 
-	entrypoint[AXIS_X] = metadata->context.entrypoint.column;
-	entrypoint[AXIS_Y] = metadata->context.entrypoint.row;
+	// Configure the registers
+	InitialiseRegisters((*pPageManager)->registers);
 
-	control->meta = metadata;
-	control->functions = functions;
+	// Configure the core program stack
+	InitialiseFungeStack(&((*pPageManager)->pStackState));
 
-	control->originalProgramString = programString;
+	// Configure the Instruction pointer to match the defined entrypoint
+	InitialiseInstructionPointerState(&((*pPageManager)->pIpState), &(pConfig->pMetadata->context.entrypoint));
 
-	InitialiseInstanceList(&(control->firstInstance));
-	CreateInstance(control->firstInstance);
-	control->firstInstance->previous = NULL;
-	InitialiseFungeInstance(((PINSTANCE_LIST)((PINSTANCE_LIST)control->firstInstance)->next)->pInstance, (void*) control, control->originalProgramString, tickDelay, outputFile, showState, singleStep, entrypoint, control->meta->dimensions);
-	
-	return;
+	// Configure the current page pointer to match the specified initial page id
+	(*pPageManager)->pPageControlList = pPageList;
+	(*pPageManager)->pCurrentPageControl = PageControlListGetPageById(
+		(*pPageManager)->pPageControlList,
+		pConfig->pMetadata->context.initialPageId
+	);
 }
 
-void InitialiseInstanceList(PINSTANCE_LIST *list) {
-	*list = (PINSTANCE_LIST)calloc(1, sizeof(INSTANCE_LIST));
-	(*list)->next = NULL;
-	(*list)->pInstance = NULL;
-	(*list)->previous = NULL;
-	return;
-}
-
-void CreateInstance(PINSTANCE_LIST list) {
-	PINSTANCE_LIST current = list;
-	while (current->next != NULL) {
+PPAGE_CONTROL PageControlListGetPageById(PPAGE_CONTROL_LIST pPageControlList, int pageId) {
+	PPAGE_CONTROL_LIST current = pPageControlList->next;
+	while (current->pPageControl != NULL) {
+		if (current->pPageControl->id == pageId) {
+			return current->pPageControl;
+		}
+		if (current->next == NULL) {
+			break;
+		}
 		current = current->next;
 	}
+	return NULL;
+}
 
-	current->next = (PINSTANCE_LIST)calloc(1, sizeof(INSTANCE_LIST));
-	((PINSTANCE_LIST)current->next)->pInstance = (PFUNGE_INSTANCE)calloc(1, sizeof(FUNGE_INSTANCE));
-	((PINSTANCE_LIST)current->next)->next = NULL;
-	((PINSTANCE_LIST)current->next)->previous = current;
+void InitialiseCoreControl(PBEFUNGE_CORE_CONTROL pControl, PBEFUNGE_PROGRAM_CONFIG pConfig){
+	pControl->pConfig = pConfig;
+	InitialiseStaticControlSettings(&(pControl->pStaticSettings), pConfig->isVisualiseModeActive, pConfig->isSingleSteModeActive, pConfig->tickDelay);
+	InitialiseDynamicControlSettings(&(pControl->pDynamicSettings));
+	InitialiseOutputState(&(pControl->pOutputState));
+	pControl->pOutputState->outputFile = pConfig->pOutFile;
+	pControl->pOutputState->output = (char*)calloc(DEFAULT_OUTPUT_SIZE, sizeof(char));
+	pControl->pOutputState->outputSize = 0;
 
+	pControl->hasTerminated = false;
+
+	if (pConfig->mode == MODE_PAGED) {
+		InitialisePageManager(&pControl->pManager, pConfig->pPages, pConfig);
+	}
+	else {
+		INFO_MESSAGE("Requested initialisation of Non-Paged program");
+	}
 	return;
 }
 
@@ -135,58 +129,58 @@ void CreateInstance(PINSTANCE_LIST list) {
 	VISUALISATION METHODS
 */
 
-void OutputString(PFUNGE_INSTANCE instance, char* str, int len) {
-	if (strlen(str) < (unsigned)(instance->staticSettings->outputMaxSize - instance->outputSize)) {
+void OutputString(PBEFUNGE_CORE_CONTROL pControl, char* str, int len) {
+	if (strlen(str) < (unsigned)(pControl->pStaticSettings->outputMaxSize - pControl->pOutputState->outputSize)) {
 		memcpy(
-			instance->output + instance->outputSize,
+			pControl->pOutputState->output + pControl->pOutputState->outputSize,
 			str,
 			len
 		);
-		instance->outputSize += len;
-		fwrite(str, 1, len, instance->dynamicSettings->hProgramOut);
-		if (instance->outputFile != NULL || instance->outputFile == stdout || instance->outputFile == stderr) {
-			fwrite(str, 1, len, instance->outputFile);
+		pControl->pOutputState->outputSize += len;
+		fwrite(str, 1, len, pControl->pDynamicSettings->hProgramOut);
+		if (pControl->pOutputState->outputFile != NULL || pControl->pOutputState->outputFile == stdout || pControl->pOutputState->outputFile == stderr) {
+			fwrite(str, 1, len, pControl->pOutputState->outputFile);
 		}
 	}
 	else {
-		if (instance->staticSettings->showState) {
+		if (pControl->pStaticSettings->showState) {
 			char* format = "Cannot output \"%s\". Not enough space in output buffer";
 			int outputLen = strlen(format) + len;
 			char* msg = (char*)calloc(outputLen, sizeof(char));
 			snprintf(msg, outputLen, format, str);
-			ERROR_MESSAGE(msg);
+			ERROR_MESSAGE("%s", msg);
 		}
 	}
 	return;
 }
 
-void OutputRegistersState(PFUNGE_INSTANCE instance) {
-	fprintf(stderr, "REG_A: %08x\n", instance->registers[REG_A]);
-	fprintf(stderr, "REG_B: %08x\n", instance->registers[REG_B]);
-	fprintf(stderr, "REG_C: %08x\n", instance->registers[REG_C]);
-	fprintf(stderr, "REG_D: %08x\n", instance->registers[REG_D]);
+void OutputRegistersState(PBEFUNGE_CORE_CONTROL pControl) {
+	fprintf(stderr, "REG_A: %08x\n", pControl->pManager->registers[REG_A]);
+	fprintf(stderr, "REG_B: %08x\n", pControl->pManager->registers[REG_B]);
+	fprintf(stderr, "REG_C: %08x\n", pControl->pManager->registers[REG_C]);
+	fprintf(stderr, "REG_D: %08x\n", pControl->pManager->registers[REG_D]);
 	return;
 }
 
-void PrintOutputState(PFUNGE_INSTANCE instance) {
+void PrintOutputState(PBEFUNGE_CORE_CONTROL pControl) {
 	int total_required = 0;
 	char* buffer = NULL;
 	const char title[] = "Output:\n============\n";
 
 	total_required += strlen(title);
-	total_required += instance->outputSize;
+	total_required += pControl->pOutputState->outputSize;
 	total_required += 1;
 
 	buffer = (char*)calloc(total_required, sizeof(char));
 
 	strncat(buffer, title, strlen(title));
-	strncat(buffer, instance->output, instance->outputSize);
+	strncat(buffer, pControl->pOutputState->output, pControl->pOutputState->outputSize);
 
 	fwrite(buffer, 1, total_required, stderr);
 	return;
 }
 
-void PrintProgramState(PFUNGE_INSTANCE instance) {
+void PrintProgramState(PBEFUNGE_CORE_CONTROL pControl) {
 	int column, row, c;
 	char* formatString = " %c ";
 	int total_required = 0;
@@ -194,9 +188,9 @@ void PrintProgramState(PFUNGE_INSTANCE instance) {
 	const char title[] = "Program State:\n==============\n";
 	char tmpBuf[32] = { 0 };
 	bool isSelected = false;
-
-	total_required += strlen(title);
-	total_required += (instance->gridStruct->rows + 2) * (instance->gridStruct->columns + 3); // For each cell
+	
+	total_required += strlen(title);	
+	total_required += (pControl->pManager->pCurrentPageControl->grid->rows + 2) * (pControl->pManager->pCurrentPageControl->grid->columns + 3); // For each cell
 	total_required += 12; // to account for the ansi escape codes around the selected cell
 	total_required += 1;
 
@@ -205,32 +199,32 @@ void PrintProgramState(PFUNGE_INSTANCE instance) {
 	strncat(buffer, title, strlen(title));
 
 	// Draw top line
-	for (c = 0; c < instance->gridStruct->columns + 2; c++) {
+	for (c = 0; c < pControl->pManager->pCurrentPageControl->grid->columns + 2; c++) {
 		strncat(buffer, "_", 1);
 	}
 	strncat(buffer, "\n", 1);
 
 	// Fill the grid
-	for (row = 0; row < instance->gridStruct->rows; row++) {
+	for (row = 0; row < pControl->pManager->pCurrentPageControl->grid->rows; row++) {
 		strncat(buffer, "|", 1);
-		for (column = 0; column < instance->gridStruct->columns; column++) {
-			if (column == instance->ipState->position[AXIS_X] && row == instance->ipState->position[AXIS_Y]) {
+		for (column = 0; column < pControl->pManager->pCurrentPageControl->grid->columns; column++) {
+			if (column == pControl->pManager->pIpState->position.column && row == pControl->pManager->pIpState->position.row) {
 				isSelected = true;
 			}
 			else {
 				isSelected = false;
 			}
-			if (instance->gridStruct->grid[row][column] == '%') {
+			if (pControl->pManager->pCurrentPageControl->grid->grid[row][column] == '%') {
 				if (isSelected)
 					snprintf(tmpBuf, sizeof(tmpBuf), "%c[101;1m%%%%%c[%dm", 0x1B, 0x1b, 0);
 				else
 					snprintf(tmpBuf, sizeof(tmpBuf), "%%%%");
 			}
-			else if (0x20 <= instance->gridStruct->grid[row][column] && instance->gridStruct->grid[row][column] <= 0x80) {
+			else if (0x20 <= pControl->pManager->pCurrentPageControl->grid->grid[row][column] && pControl->pManager->pCurrentPageControl->grid->grid[row][column] <= 0x80) {
 				if (isSelected) 
-					snprintf(tmpBuf, sizeof(tmpBuf), "%c[101;1m%c%c[%dm", 0x1B, instance->gridStruct->grid[row][column], 0x1b, 0);
+					snprintf(tmpBuf, sizeof(tmpBuf), "%c[101;1m%c%c[%dm", 0x1B, pControl->pManager->pCurrentPageControl->grid->grid[row][column], 0x1b, 0);
 				else 
-					snprintf(tmpBuf, sizeof(tmpBuf), "%c", instance->gridStruct->grid[row][column]);
+					snprintf(tmpBuf, sizeof(tmpBuf), "%c", pControl->pManager->pCurrentPageControl->grid->grid[row][column]);
 			}
 			else {
 				if (isSelected)
@@ -246,7 +240,7 @@ void PrintProgramState(PFUNGE_INSTANCE instance) {
 	}
 
 	// Draw top line
-	for (c = 0; c < instance->gridStruct->columns + 2; c++) {
+	for (c = 0; c < pControl->pManager->pCurrentPageControl->grid->columns + 2; c++) {
 		strncat(buffer, "_", 1);
 	}
 	strncat(buffer, "\n", 1);
@@ -256,7 +250,7 @@ void PrintProgramState(PFUNGE_INSTANCE instance) {
 	return;
 }
 
-void PrintStackState(PFUNGE_INSTANCE instance) {
+void PrintStackState(PBEFUNGE_CORE_CONTROL pControl) {
 	int stackWindowMaxSize = 25;
 	int c, d = 0;
 	int total_required = 0;
@@ -264,8 +258,8 @@ void PrintStackState(PFUNGE_INSTANCE instance) {
 	const char title[] = "Stack State:\n============\n";
 	char tmpBuf[41] = { 0 };
 
-	if (stackWindowMaxSize >= instance->stackState->stackPointer) {
-		c = instance->stackState->stackPointer - 1;
+	if (stackWindowMaxSize >= pControl->pManager->pStackState->stackPointer) {
+		c = pControl->pManager->pStackState->stackPointer - 1;
 	}
 	else {
 		c = stackWindowMaxSize;
@@ -280,14 +274,14 @@ void PrintStackState(PFUNGE_INSTANCE instance) {
 	strncat(buffer, title, strlen(title));
 	
 
-	snprintf(tmpBuf, sizeof(tmpBuf), "   %d   \n", instance->stackState->stackPointer);
+	snprintf(tmpBuf, sizeof(tmpBuf), "   %d   \n", pControl->pManager->pStackState->stackPointer);
 	strncat(buffer, tmpBuf, strlen(tmpBuf));
 	memset(tmpBuf, 0, strlen(tmpBuf));
 
 	strncat(buffer, "|------------|\n", strlen(title));
 
 	for (; c >= 0; c--) {
-		snprintf(tmpBuf, sizeof(tmpBuf), "|  %08x  | (%-6d)\n", instance->stackState->stack[c], c);
+		snprintf(tmpBuf, sizeof(tmpBuf), "|  %08x  | (%-6d)\n", pControl->pManager->pStackState->stack[c], c);
 		strncat(buffer, tmpBuf, strlen(tmpBuf));
 		memset(tmpBuf, 0, strlen(tmpBuf));
 	}
@@ -295,28 +289,28 @@ void PrintStackState(PFUNGE_INSTANCE instance) {
 
 
 	fprintf(stderr, buffer);
-	fprintf(stderr, "Function call depth: %d\n", instance->dynamicSettings->depth);
+	fprintf(stderr, "Function call depth: %d\n", pControl->pDynamicSettings->depth);
 }
 
 /*
 	PRIMITIVE METHODS
 */
 
-char GetCommand(PFUNGE_INSTANCE instance) {
-	return instance->gridStruct->grid[instance->ipState->position[AXIS_Y]][instance->ipState->position[AXIS_X]];
+char GetCommand(PBEFUNGE_CORE_CONTROL pControl) {
+	return pControl->pManager->pCurrentPageControl->grid->grid[pControl->pManager->pIpState->position.row][pControl->pManager->pIpState->position.column];
 }
 
-void Push(PFUNGE_INSTANCE instance, STACK_ITEM_TYPE value) {
+void Push(PBEFUNGE_CORE_CONTROL pControl, STACK_ITEM_TYPE value) {
 	char buf[10] = { 0 };
-	instance->stackState->stack[instance->stackState->stackPointer++] = value;
+	pControl->pManager->pStackState->stack[pControl->pManager->pStackState->stackPointer++] = value;
 	return;
 }
 
-void Pop(PFUNGE_INSTANCE instance, STACK_ITEM_TYPE* out) {
+void Pop(PBEFUNGE_CORE_CONTROL pControl, STACK_ITEM_TYPE* out) {
 	char buf[10] = { 0 };
 
-	if (instance->stackState->stackPointer > 0){
-		STACK_ITEM_TYPE value = instance->stackState->stack[--instance->stackState->stackPointer];
+	if (pControl->pManager->pStackState->stackPointer > 0){
+		STACK_ITEM_TYPE value = pControl->pManager->pStackState->stack[--pControl->pManager->pStackState->stackPointer];
 		if (out != NULL) {
 			*out = value;
 		}
@@ -328,64 +322,64 @@ void Pop(PFUNGE_INSTANCE instance, STACK_ITEM_TYPE* out) {
 	return;
 }
 
-void SetDirection(PFUNGE_INSTANCE instance, int direction) {
-	instance->ipState->direction = direction;
+void SetDirection(PBEFUNGE_CORE_CONTROL pControl, int direction) {
+	pControl->pManager->pIpState->direction = direction;
 }
 
-void Put(PFUNGE_INSTANCE instance) {
+void Put(PBEFUNGE_CORE_CONTROL pControl) {
 	//char row, column, value;
 	STACK_ITEM_TYPE row, column, value;
 
 	// retrieve two values from the stack
-	Pop(instance, &row);
-	Pop(instance, &column);
-	Pop(instance, &value);
+	Pop(pControl, &row);
+	Pop(pControl, &column);
+	Pop(pControl, &value);
 
-	if (0 > row || row >= instance->gridStruct->rows) {
+	if (0 > row || row >= pControl->pManager->pCurrentPageControl->grid->rows) {
 		char* rowErrorformat = "Put: Selected row out of range: %d";
 		char* rowErrorStr = (char*)calloc(strlen(rowErrorformat) + 10, sizeof(char));
 		snprintf(rowErrorStr, strlen(rowErrorformat) + 10, rowErrorformat, row);
-		ERROR_MESSAGE(rowErrorStr);
+		ERROR_MESSAGE("%s", rowErrorStr);
 		return;
 	}
 
-	if (0 > column || column >= instance->gridStruct->columns) {
+	if (0 > column || column >= pControl->pManager->pCurrentPageControl->grid->columns) {
 		char* colErrorformat = "Put: Selected column out of range: %d";
 		char* colErrorStr = (char*)calloc(strlen(colErrorformat) + 10, sizeof(char));
 		snprintf(colErrorStr, strlen(colErrorformat) + 10, colErrorformat, column);
-		ERROR_MESSAGE(colErrorStr);
+		ERROR_MESSAGE("%s", colErrorStr);
 		return;
 	}
 
-	instance->gridStruct->grid[row][column] = (char) value;
+	pControl->pManager->pCurrentPageControl->grid->grid[row][column] = (char) value;
 
 	return;
 }
 
-void Get(PFUNGE_INSTANCE instance) {
+void Get(PBEFUNGE_CORE_CONTROL pControl) {
 	STACK_ITEM_TYPE row, column;
 
 	// retrieve two values from the stack
-	Pop(instance, &row);
-	Pop(instance, &column);
+	Pop(pControl, &row);
+	Pop(pControl, &column);
 
-	if (0 > row || row >= instance->gridStruct->rows) {
+	if (0 > row || row >= pControl->pManager->pCurrentPageControl->grid->rows) {
 		char* rowErrorformat = "Get: Selected row out of range: %d";
 		char* rowErrorStr = (char*)calloc(strlen(rowErrorformat) + 10, sizeof(char));
 		snprintf(rowErrorStr, strlen(rowErrorformat) + 10, rowErrorformat, row);
-		ERROR_MESSAGE(rowErrorStr);
+		ERROR_MESSAGE("%s", rowErrorStr);
 		return;
 	}
 
-	if (0 > column || column >= instance->gridStruct->columns) {
+	if (0 > column || column >= pControl->pManager->pCurrentPageControl->grid->columns) {
 		char* colErrorformat = "Get: Selected column out of range: %d";
 		char* colErrorStr = (char*)calloc(strlen(colErrorformat) + 10, sizeof(char));
 		snprintf(colErrorStr, strlen(colErrorformat) + 10, colErrorformat, column);
-		ERROR_MESSAGE(colErrorStr);
+		ERROR_MESSAGE("%s", colErrorStr);
 		return;
 	}
 
-	Push(instance, instance->gridStruct->grid[row][column]);
+	Push(pControl, pControl->pManager->pCurrentPageControl->grid->grid[row][column]);
 
 	return;
 }
@@ -394,39 +388,39 @@ void Get(PFUNGE_INSTANCE instance) {
 	SETTING CHANGE METHODS
 */
 
-void ToggleStringMode(PFUNGE_INSTANCE instance) {
-	instance->dynamicSettings->stringMode = !instance->dynamicSettings->stringMode;
+void ToggleStringMode(PBEFUNGE_CORE_CONTROL pControl) {
+	pControl->pDynamicSettings->stringMode = !pControl->pDynamicSettings->stringMode;
 	return;
 }
 
-void FlipDirection(PFUNGE_INSTANCE instance) {
-	if (instance->ipState->direction == DIR_RIGHT)
-		SetDirection(instance, DIR_LEFT);
-	else if (instance->ipState->direction == DIR_LEFT)
-		SetDirection(instance, DIR_RIGHT);
-	else if (instance->ipState->direction == DIR_UP)
-		SetDirection(instance, DIR_DOWN);
-	else if (instance->ipState->direction == DIR_DOWN)
-		SetDirection(instance, DIR_UP);
+void FlipDirection(PBEFUNGE_CORE_CONTROL pControl) {
+	if (pControl->pManager->pIpState->direction == DIR_RIGHT)
+		SetDirection(pControl, DIR_LEFT);
+	else if (pControl->pManager->pIpState->direction == DIR_LEFT)
+		SetDirection(pControl, DIR_RIGHT);
+	else if (pControl->pManager->pIpState->direction == DIR_UP)
+		SetDirection(pControl, DIR_DOWN);
+	else if (pControl->pManager->pIpState->direction == DIR_DOWN)
+		SetDirection(pControl, DIR_UP);
 	else
 		ERROR_MESSAGE("Seriously... What the fuck?\n")
 
 }
 
-void SetProgramInput(PFUNGE_INSTANCE instance, FILE* hInput) {
-	instance->dynamicSettings->hProgramIn = hInput;
+void SetProgramInput(PBEFUNGE_CORE_CONTROL pControl, FILE* hInput) {
+	pControl->pDynamicSettings->hProgramIn = hInput;
 	return;
 }
 
-void SetProgramOutput(PFUNGE_INSTANCE instance, FILE* hOutput) {
-	instance->dynamicSettings->hProgramOut = hOutput;
+void SetProgramOutput(PBEFUNGE_CORE_CONTROL pControl, FILE* hOutput) {
+	pControl->pDynamicSettings->hProgramOut = hOutput;
 	return;
 }
 
-void ResetProgramInput(PFUNGE_INSTANCE instance) {
-	if (instance->dynamicSettings->hProgramIn != stdin && instance->dynamicSettings->hProgramIn != NULL) {
-		fclose(instance->dynamicSettings->hProgramIn);
-		SetProgramInput(instance, (FILE*)stdin);
+void ResetProgramInput(PBEFUNGE_CORE_CONTROL pControl) {
+	if (pControl->pDynamicSettings->hProgramIn != stdin && pControl->pDynamicSettings->hProgramIn != NULL) {
+		fclose(pControl->pDynamicSettings->hProgramIn);
+		SetProgramInput(pControl, (FILE*)stdin);
 	}
 	else {
 		ERROR_MESSAGE("Cannot close/reset program input. Either already reset or double close attempted.")
@@ -434,10 +428,10 @@ void ResetProgramInput(PFUNGE_INSTANCE instance) {
 	return;
 }
 
-void ResetProgramOutput(PFUNGE_INSTANCE instance) {
-	if (instance->dynamicSettings->hProgramOut != stdout && instance->dynamicSettings->hProgramOut != NULL) {
-		fclose(instance->dynamicSettings->hProgramOut);
-		SetProgramOutput(instance, (FILE*)stdout);
+void ResetProgramOutput(PBEFUNGE_CORE_CONTROL pControl) {
+	if (pControl->pDynamicSettings->hProgramOut != stdout && pControl->pDynamicSettings->hProgramOut != NULL) {
+		fclose(pControl->pDynamicSettings->hProgramOut);
+		SetProgramOutput(pControl, (FILE*)stdout);
 	}
 	else {
 		ERROR_MESSAGE("Cannot close/reset program output. Either already reset or double close attempted.")
@@ -449,16 +443,16 @@ void ResetProgramOutput(PFUNGE_INSTANCE instance) {
 	CONTROL METHODS
 */
 
-void LoadProgramString(PFUNGE_INSTANCE instance, char* programString) {
+void LoadProgramString(PBEFUNGE_CORE_CONTROL pControl, char* programString) {
 	int columnCount = 0;
 	int rowCount = 0;
 	unsigned int ptr = 0;
 	char c = '\0';
 	int i, j = 0;
 	// Fill the entire grid with NOPS
-	for (i = 0; i < instance->gridStruct->rows; i++) {
-		for (j = 0; j < instance->gridStruct->columns; j++) {
-			instance->gridStruct->grid[i][j] = 0x20;
+	for (i = 0; i < pControl->pManager->pCurrentPageControl->grid->rows; i++) {
+		for (j = 0; j < pControl->pManager->pCurrentPageControl->grid->columns; j++) {
+			pControl->pManager->pCurrentPageControl->grid->grid[i][j] = 0x20;
 		}
 	}
 
@@ -466,7 +460,7 @@ void LoadProgramString(PFUNGE_INSTANCE instance, char* programString) {
 		if ((ptr < strlen(programString) - 1
 			&& (programString[ptr] == '\r' && programString[ptr + 1] == '\n'))
 			|| (programString[ptr] == '\r' || programString[ptr] == '\n')
-			|| columnCount == instance->gridStruct->columns) {
+			|| columnCount == pControl->pManager->pCurrentPageControl->grid->columns) {
 			/*while (programString[ptr] == '\r' || programString[ptr] == '\n') {
 				ptr++;
 			}*/ 
@@ -476,36 +470,36 @@ void LoadProgramString(PFUNGE_INSTANCE instance, char* programString) {
 			continue;
 		}
 		c = programString[ptr++];
-		instance->gridStruct->grid[rowCount][columnCount++] = c;
+		pControl->pManager->pCurrentPageControl->grid->grid[rowCount][columnCount++] = c;
 	}
 
 	return;
 }
 
-void TakeStep(PFUNGE_INSTANCE instance) {
-	switch (instance->ipState->direction) {
+void TakeStep(PBEFUNGE_CORE_CONTROL pControl) {
+	switch (pControl->pManager->pIpState->direction) {
 	case DIR_RIGHT:
-		instance->ipState->position[AXIS_X]++;
-		if (instance->ipState->position[AXIS_X] == instance->gridStruct->columns) {
-			instance->ipState->position[AXIS_X] = 0;
+		pControl->pManager->pIpState->position.column++;
+		if (pControl->pManager->pIpState->position.column == pControl->pManager->pCurrentPageControl->grid->columns) {
+			pControl->pManager->pIpState->position.column = 0;
 		}
 		break;
 	case DIR_LEFT:
-		instance->ipState->position[AXIS_X]--;
-		if (instance->ipState->position[AXIS_X] == -1) {
-			instance->ipState->position[AXIS_X] = instance->gridStruct->columns -1;
+		pControl->pManager->pIpState->position.column--;
+		if (pControl->pManager->pIpState->position.column == -1) {
+			pControl->pManager->pIpState->position.column = pControl->pManager->pCurrentPageControl->grid->columns -1;
 		}
 		break;
 	case DIR_UP:
-		instance->ipState->position[AXIS_Y]--;
-		if (instance->ipState->position[AXIS_Y] == -1) {
-			instance->ipState->position[AXIS_Y] = instance->gridStruct->rows - 1;
+		pControl->pManager->pIpState->position.row--;
+		if (pControl->pManager->pIpState->position.row == -1) {
+			pControl->pManager->pIpState->position.row = pControl->pManager->pCurrentPageControl->grid->rows - 1;
 		}
 		break;
 	case DIR_DOWN:
-		instance->ipState->position[AXIS_Y]++;
-		if (instance->ipState->position[AXIS_Y] == instance->gridStruct->rows) {
-			instance->ipState->position[AXIS_Y] = 0;
+		pControl->pManager->pIpState->position.row++;
+		if (pControl->pManager->pIpState->position.row == pControl->pManager->pCurrentPageControl->grid->rows) {
+			pControl->pManager->pIpState->position.row = 0;
 		}
 		break;
 	default:
@@ -514,8 +508,8 @@ void TakeStep(PFUNGE_INSTANCE instance) {
 	}
 }
 
-void BackStep(PFUNGE_INSTANCE instance) {
-	int origDirection = instance->ipState->direction;
+void BackStep(PBEFUNGE_CORE_CONTROL pControl) {
+	int origDirection = pControl->pManager->pIpState->direction;
 	int backStepDirection = (int)NULL;
 
 	switch (origDirection) {
@@ -536,35 +530,35 @@ void BackStep(PFUNGE_INSTANCE instance) {
 		break;
 	}
 
-	SetDirection(instance, backStepDirection);
-	TakeStep(instance);
-	SetDirection(instance, origDirection);
+	SetDirection(pControl, backStepDirection);
+	TakeStep(pControl);
+	SetDirection(pControl, origDirection);
 
 	return;
 }
 
-int ProcessTick(PFUNGE_INSTANCE instance) {
+int ProcessTick(PBEFUNGE_CORE_CONTROL pControl) {
 	int retval = STATUS_OK;
 	bool commandStatus = false;
-	char command = GetCommand(instance);
+	char command = GetCommand(pControl);
 
 
-	if (instance->dynamicSettings->stringMode) {
+	if (pControl->pDynamicSettings->stringMode) {
 		// If the current context is string mode process the command as if it were ASCII, unless command is " char
 		if (command == CMD_STRING) {
-			ToggleStringMode(instance);
+			ToggleStringMode(pControl);
 		}
 		else {
-			Push(instance, (STACK_ITEM_TYPE)command);
+			Push(pControl, (STACK_ITEM_TYPE)command);
 		}
 		commandStatus = true;
 	}
 	else if (command >= 0x30 && command <= 0x39) {
-		Push(instance, (STACK_ITEM_TYPE)(command - 0x30));
+		Push(pControl, (STACK_ITEM_TYPE)(command - 0x30));
 		commandStatus = true;
 	}
 	else {
-		commandStatus = AcceptCommand(instance, command);
+		commandStatus = AcceptCommand(pControl, command);
 	}
 	switch (command) {
 	case CMD_CALL:
@@ -596,7 +590,7 @@ int ProcessTick(PFUNGE_INSTANCE instance) {
 	return retval;
 }
 
-bool AcceptCommand(PFUNGE_INSTANCE instance, char commandChar) {
+bool AcceptCommand(PBEFUNGE_CORE_CONTROL pControl, char commandChar) {
 	int counter = 0;
 	int commandOrdinal = 0;
 	bool status = false;
@@ -606,7 +600,7 @@ bool AcceptCommand(PFUNGE_INSTANCE instance, char commandChar) {
 		if (commandChar == commandCharLookup[counter]) {
 			// Command Character matches, we can process the command
 			commandOrdinal = counter;
-			status = commandTable[commandOrdinal](instance);
+			status = commandTable[commandOrdinal](pControl);
 			commandHasBeenExecuted = true;
 			break;
 		}
@@ -618,60 +612,13 @@ bool AcceptCommand(PFUNGE_INSTANCE instance, char commandChar) {
 			int outputLen = strlen(format) + sizeof(char);
 			char* msg = (char*)calloc(outputLen, sizeof(char));
 			snprintf(msg, outputLen, format, commandChar);
-			ERROR_MESSAGE(msg);
+			ERROR_MESSAGE("%s", msg);
 		}
 	}
 
 	return status;
 }
 
-bool HasActiveInstances(PBEFUNGE_CONTROL control) {
-	if (control->firstInstance->pInstance != NULL || control->firstInstance->next != NULL) {
-		return true;
-	}
-	return false;
-}
-
-void RegisterInstanceTermination(PFUNGE_INSTANCE pInstance) {
-
-	PINSTANCE_LIST current = ((PBEFUNGE_CONTROL)pInstance->parent)->firstInstance;
-	bool success = false;
-	do {
-		if (current->pInstance == pInstance) {
-			// Found the instance that has requested termination! reasign links in list to remove current entry
-			free(pInstance);
-			current->pInstance = NULL;
-			if (current->previous != NULL) {
-				((PINSTANCE_LIST)current->previous)->next = current->next;
-			}
-			else {
-				if (current->next != NULL) {
-					((PINSTANCE_LIST)current->next)->previous = NULL;
-				}
-			}
-			if (current->next != NULL) {
-				((PINSTANCE_LIST)current->next)->previous = current->previous;
-			}
-			else {
-				if (current->previous != NULL) {
-					((PINSTANCE_LIST)current->previous)->next = NULL;
-				}
-			}
-			success = true;
-			break;
-		}
-		current = current->next;
-	} while (current != NULL);
-
-
-	if (success) {
-		INFO_MESSAGE("Successfully terminated and removed instance from control list");
-	}
-	else {
-		ERROR_MESSAGE("Failed to remove instance from control list");
-	}
-	return;
-}
 
 /*
 	MISC METHODS

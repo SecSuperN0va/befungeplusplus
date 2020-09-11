@@ -7,8 +7,7 @@
 #define DEFAULT_DIMENSIONS_ROWS 25
 #define DEFAULT_DIMENSIONS_COLUMNS 80
 
-#define DEFAULT_THREAD_COUNT 1
-#define DEFAULT_THREAD_HEADSTART 1
+#define DEFAULT_INITIAL_PAGE_ID 0
 
 
 typedef struct GridPoint {
@@ -28,10 +27,10 @@ typedef struct BefungeContext {
 	GRID_POINT entrypoint;	// Point on the grid to start execution from
 	int threadCount;		// Number of concurrent threads to run across program
 	int threadHeadStart;	// Number of ticks between individual thread starts
+	int initialPageId;		// ID of the page to start execution from
 } BEFUNGE_CONTEXT, *PBEFUNGE_CONTEXT;
 
 typedef struct BefungeMetadata {
-	GRID_DIMENSIONS dimensions;
 	BEFUNGE_CONTEXT context;
 } BEFUNGE_METADATA, *PBEFUNGE_METADATA;
 
