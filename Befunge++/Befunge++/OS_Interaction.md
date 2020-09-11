@@ -1,6 +1,6 @@
-#Befunge++ OS Interaction
+# Befunge++ OS Interaction
 
-##OSI Command
+## OSI Command
 Operating System features can be accessed using the 'o' opcode. 
 
 When executed, an OSI ID is popped from the stack and used to lookup the relevant action to take.
