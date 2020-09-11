@@ -72,7 +72,6 @@ bool CmdASCIIIn(PBEFUNGE_CORE_CONTROL instance);
 bool CmdTerminate(PBEFUNGE_CORE_CONTROL instance);
 bool CmdLoadReg(PBEFUNGE_CORE_CONTROL instance);
 bool CmdGetReg(PBEFUNGE_CORE_CONTROL instance);
-bool CmdSyscall(PBEFUNGE_CORE_CONTROL instance);
 bool CmdOperatingSystemInteraction(PBEFUNGE_CORE_CONTROL instance);
 bool CmdFork(PBEFUNGE_CORE_CONTROL instance);
 bool CmdCall(PBEFUNGE_CORE_CONTROL instance);
