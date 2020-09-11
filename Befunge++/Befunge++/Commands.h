@@ -106,8 +106,9 @@ bool CmdCall(PBEFUNGE_CORE_CONTROL instance);
 // Extended Functionality
 #define ORD_LOAD_REG 27
 #define ORD_GET_REG 28
-#define ORD_SYSCALL 29
+
 #define ORD_OSI 30
+
 #define ORD_CALL 32
 
 #define MAX_ORD 33
